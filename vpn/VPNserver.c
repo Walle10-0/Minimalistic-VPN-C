@@ -31,7 +31,6 @@
 
 #define TUNTAP_NAME "vpnclient"
 
-#define VPN_CLIENT_IP "10.8.0.2/24"
 #define VPN_PRIVATE_SERVER_IP "10.8.0.1/24"
 #define VPN_PUBLIC_SERVER_IP "192.168.122.85"
 #define VPN_PORT 55555
@@ -51,6 +50,30 @@ void DieWithError(char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
+}
+
+char *getDefaultInterface()
+{
+    struct nl_sock *sock = nl_socket_alloc();
+    nl_connect(sock, NETLINK_ROUTE);
+
+    struct rtnl_route *route;
+    struct nl_cache *cache;
+    struct rtnl_link *link;
+    char *ifName = NULL;
+
+    rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache);
+
+    // iterate all routes
+    rtnl_route_alloc(); // create route object
+    // better: use rtnl_route_get_default() if your libnl version supports it
+
+    // simplified: you can run `ip route show default` via popen and parse the line
+    // e.g.,
+    // default via 192.168.1.1 dev enp1s0 proto dhcp metric 100
+
+    nl_socket_free(sock);
+    return ifName; // you would strdup() it
 }
 
 // configure the TUN/TAP interface with Netlink
@@ -84,7 +107,7 @@ int configureInterface(char * ifName)
 
         struct nl_addr *local;
 
-        err = nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local); // VPN client IP
+        err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &local); // VPN client IP
         if (err < 0)
         {
             fprintf(stderr, "Invalid IP\n");
@@ -100,35 +123,13 @@ int configureInterface(char * ifName)
             }
             else
             {
-                // re-route all traffic through the VPN
-                struct rtnl_route *route = rtnl_route_alloc();
-                struct nl_addr *dst, *gateway;
+                // cleanup
+                rtnl_addr_put(addr);
+                rtnl_link_put(link);
 
-                // default route
-                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
-                rtnl_route_set_dst(route, dst);
+                // enable forwarding and set up route
+                system("sysctl -w net.ipv4.ip_forward=1");
 
-                // next-hop via your VPN server
-                err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &gateway); // VPN server IP
-                if (err < 0) 
-                {
-                    fprintf(stderr, "Invalid IP\n");
-                }
-                else
-                {
-                    struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
-                    rtnl_route_nh_set_gateway(nh, gateway);
-                    rtnl_route_add_nexthop(route, nh);
-
-                    // Set metric (priority)
-                    rtnl_route_set_priority(route, 0); // lower = preferred
-
-                    rtnl_route_add(sock, route, 0);
-
-                    // cleanup
-                    rtnl_addr_put(addr);
-                    rtnl_link_put(link);
-                }
             }
         }
     }
@@ -245,7 +246,7 @@ void setupVPNContext(struct vpn_context * context)
 	context->serverAddr.sin_port = htons(VPN_PORT);      /* Local port */
 
     // Convert string IP to binary
-    if (inet_pton(AF_INET, VPN_PUBLIC_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
+    if (inet_pton(AF_INET, VPN_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
     {
         DieWithError("inet_pton failed");
     }

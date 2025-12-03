@@ -6,3 +6,9 @@ VPNclient.out: VPNclient.o
 
 VPNclient.o: VPNclient.c
 	gcc $(CFLAGS) -c VPNclient.c
+
+VPNserver.out: VPNserver.o
+	gcc VPNserver.o -o VPNserver.out $(LDFLAGS)
+
+VPNserver.o: VPNserver.c
+	gcc $(CFLAGS) -c VPNserver.c
