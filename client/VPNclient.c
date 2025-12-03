@@ -27,11 +27,22 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>  // for multi-threading
 
 #define TUNTAP_NAME "vpnclient"
 
 #define VPN_CLIENT_IP "10.8.0.2/24"
 #define VPN_SERVER_IP "10.8.0.1"
+#define VPN_PORT 55555
+
+#define MAX_BUF_SIZE 2000
+
+struct vpn_context {
+    int interfaceFd;
+    int vpnSock;
+    struct sockaddr_in serverAddr;
+    // encryption keys, etc.
+};
 
 // create TUN interface for VPN client
 int createInterface(char *interfaceName)
@@ -40,38 +51,44 @@ int createInterface(char *interfaceName)
     int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
     struct ifreq setIfrRequest;  // interface request struct
 
-    if (tunFd == -1) {
-        // an error has occured!
-		return -1;
+    if (tunFd != -1) {
+        // zero out the ifreq struct
+        memset(&setIfrRequest, 0, sizeof(setIfrRequest));
+
+        // set flags
+        setIfrRequest.ifr_flags = IFF_TUN; // we don't care about TAP interfaces
+
+        // set name
+        strncpy(setIfrRequest.ifr_name, interfaceName, IFNAMSIZ);
+
+        // create interface
+        int control_error = ioctl(tunFd, TUNSETIFF, &setIfrRequest);
+
+        if (control_error < 0) {
+            // an error has occured!
+            close(tunFd);
+            return -1;
+        }
+
+        // update interface name incase it's different than requested
+        // NOTE: this changes the name variable in the caller as well
+        memcpy(interfaceName, setIfrRequest.ifr_name, IFNAMSIZ);
+
+        if (configureInterface(interfaceName) < 0)
+        {
+            fprintf(stderr, "Error in connfiguring interface\n");
+            close(tunFd);
+            return -1;
+        }
 	}
 
-    // zero out the ifreq struct
-    memset(&setIfrRequest, 0, sizeof(setIfrRequest));
 
-    // set flags
-    setIfrRequest.ifr_flags = IFF_TUN; // we don't care about TAP interfaces
-
-    // set name
-    strncpy(setIfrRequest.ifr_name, interfaceName, IFNAMSIZ);
-
-    // create interface
-    int control_error = ioctl(tunFd, TUNSETIFF, &setIfrRequest);
-
-    if (control_error < 0) {
-        // an error has occured!
-        close(tunFd);
-        return -1;
-    }
-
-    // update interface name incase it's different than requested
-    // NOTE: this changes the name variable in the caller as well
-	memcpy(interfaceName, setIfrRequest.ifr_name, IFNAMSIZ);
-    
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
 
-void configureInterface(char * ifName)
+int configureInterface(char * ifName)
 {
+    int err = 0;
     struct nl_sock *sock = nl_socket_alloc();
     nl_connect(sock, NETLINK_ROUTE);
 
@@ -82,6 +99,7 @@ void configureInterface(char * ifName)
     if (!link)
     {
         fprintf(stderr, "Failed to allocate link for eth0.\n");
+        err = -1
     }
     else
     {
@@ -98,63 +116,136 @@ void configureInterface(char * ifName)
 
         struct nl_addr *local;
 
-
-        if (nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local) < 0)
+        err = nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local); // VPN client IP
+        if (err < 0)
         {
             fprintf(stderr, "Invalid IP\n");
-            exit(1);
         }
-
-        rtnl_addr_set_local(addr, local);
-        rtnl_addr_set_link(addr, link);
+        else
+        {
+            rtnl_addr_set_local(addr, local);
+            rtnl_addr_set_link(addr, link);
         
-        int err = rtnl_addr_add(sock, addr, 0);
-        if (err < 0) {
-            fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
+            err = rtnl_addr_add(sock, addr, 0);
+            if (err < 0) {
+                fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
+            }
+            else
+            {
+                // re-route all traffic through the VPN
+                struct rtnl_route *route = rtnl_route_alloc();
+                struct nl_addr *dst, *gateway;
+
+                // default route
+                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
+                rtnl_route_set_dst(route, dst);
+
+                // next-hop via your VPN server
+                err = nl_addr_parse(VPN_SERVER_IP, AF_INET, &gateway) // VPN server IP
+                if (err < 0) 
+                {
+                    fprintf(stderr, "Invalid IP\n");
+                }
+                else
+                {
+                    struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
+                    rtnl_route_nh_set_gateway(nh, gateway);
+                    rtnl_route_add_nexthop(route, nh);
+
+                    // Set metric (priority)
+                    rtnl_route_set_priority(route, 0); // lower = preferred
+
+                    rtnl_route_add(sock, route, 0);
+
+                    // cleanup
+                    rtnl_addr_put(addr);
+                    rtnl_link_put(link);
+                }
+            }
         }
-
-        // re-route all traffic through the VPN
-        struct rtnl_route *route = rtnl_route_alloc();
-        struct nl_addr *dst, *gateway;
-
-        // default route
-        nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
-        rtnl_route_set_dst(route, dst);
-
-        // next-hop via your VPN server
-        if (nl_addr_parse(VPN_SERVER_IP, AF_INET, &gateway) < 0) // VPN server IP
-        {
-            fprintf(stderr, "Invalid IP\n");
-            exit(1);
-        }
-        struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
-        rtnl_route_nh_set_gateway(nh, gateway);
-        rtnl_route_add_nexthop(route, nh);
-
-        // Set metric (priority)
-        rtnl_route_set_priority(route, 0); // lower = preferred
-
-        rtnl_route_add(sock, route, 0);
-
-        // cleanup
-        rtnl_addr_put(addr);
-        rtnl_link_put(link);
     }
 
     nl_socket_free(sock);
+
+    return err;
+}
+
+int setupSocket(unsigned short fileServPort)
+{
+	int servSockAddr;
+	struct sockaddr_in localServAddr; // Local address
+
+	/* Create socket for incoming connections */
+	// note SOCK_DGRAM for UDP not SOCK_STREAM for TCP
+	if ((servSockAddr = socket(PF_INET, SOCK_DGRAM, 0/*IPPROTO_UDP*/)) < 0)
+		DieWithError("socket() failed");
+  
+	/* Construct local address structure */
+	memset(&localServAddr, 0, sizeof(localServAddr));   /* Zero out structure */
+	localServAddr.sin_family = AF_INET;                /* Internet address family */
+	localServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
+	localServAddr.sin_port = htons(fileServPort);      /* Local port */
+
+	/* Bind to the local address */
+	if (bind(servSockAddr, (struct sockaddr *) &localServAddr, sizeof(localServAddr)) < 0)
+		DieWithError("bind() failed");
+
+	/* Mark the socket so it will listen for incoming connections */
+	if (listen(servSockAddr, MAXPENDING) < 0)
+		DieWithError("listen() failed");
+	return servSockAddr;
+}
+
+// takes in vpn_context struct pointer
+void* spawnTransmitterThread(void* arg)
+{
+    printf("start Transmit--------------------\n");
+    
+    struct vpn_context * context = (struct vpn_context *)arg;
+
+        int len;
+    char buf[MAX_BUF_SIZE];
+	while(1) 
+	{
+     len = read(interfaceFd, buf, sizeof(buf));
+
+     printf("Rx %d bytes \n", len);
+     len=0;
+   }
+    
+    printf("end Transmit--------------------\n");
+    
+    pthread_exit(NULL);
+}
+
+void* spawnRecieverThread(void* arg)
+{	
+	printf("start Listen--------------------\n");
+	
+	struct vpn_context * context = (struct vpn_context *)arg;
+
+    
+	
+	printf("end Listen--------------------\n");
+	
+	pthread_exit(NULL);
 }
 
 void main()
-{	int len; char buf[2000];
+{
+    // create shared context object
+    struct vpn_context context;
+    memset(&context, 0, sizeof(context));
 
     // interface name
     char interfaceName[IFNAMSIZ];
     strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
 
     // create the interface and get a filedecriptor we can read and write to
-    int interfaceFd = createInterface(interfaceName);
+    context.interfaceFd = createInterface(interfaceName);
 
-    if (interfaceFd > 0)
+    // check for error
+    if (context.interfaceFd  > 0)
     {
         printf("TUN/TAP interface %s created successfully with name %s!\n", TUNTAP_NAME, interfaceName);
     }
@@ -164,15 +255,29 @@ void main()
         printf("Are you root?\n");
         return;
     }
+    
+    // setup VPN socket
+    context.vpnSock = setupSocket(VPN_PORT); // hardcoded port for now
 
-    configureInterface(interfaceName);
+    // check for error
+    if (context.vpnSock  > 0)
+    {
+        printf("VPN socket created successfully!\n");
+    }
+    else
+    {
+        printf("Error creating VPN socket\n");
+        close(context.interfaceFd);
+        return;
+    }
 
-	while(1) 
-	{
-     len = read(interfaceFd, buf, sizeof(buf));
+    pthread_t transmitter, reciever;
+    pthread_create(&transmitter, NULL, &spawnTransmitterThread, &context);
+    pthread_create(&reciever, NULL, &spawnRecieverThread, &context);
 
-     printf("Rx %d bytes \n", len);
-     len=0;
-   }
+    pthread_join(transmitter, NULL);
+    pthread_join(reciever, NULL);
+
+
    close(interfaceFd);
 }
