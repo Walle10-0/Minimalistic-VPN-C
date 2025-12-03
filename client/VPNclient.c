@@ -30,6 +30,9 @@
 
 #define TUNTAP_NAME "vpnclient"
 
+#define VPN_CLIENT_IP "10.8.0.2/24"
+#define VPN_SERVER_IP "10.8.0.1"
+
 // create TUN interface for VPN client
 int createInterface(char *interfaceName)
 {
@@ -96,7 +99,7 @@ void configureInterface(char * ifName)
         struct nl_addr *local;
 
 
-        if (nl_addr_parse("10.8.0.2/24", AF_INET, &local) < 0)
+        if (nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local) < 0)
         {
             fprintf(stderr, "Invalid IP\n");
             exit(1);
@@ -109,6 +112,26 @@ void configureInterface(char * ifName)
         if (err < 0) {
             fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
         }
+
+        // re-route all traffic through the VPN
+        struct rtnl_route *route = rtnl_route_alloc();
+        struct nl_addr *dst, *gateway;
+
+        // default route
+        nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
+        rtnl_route_set_dst(route, dst);
+
+        // next-hop via your VPN server
+        if (nl_addr_parse(VPN_SERVER_IP, AF_INET, &gateway) < 0) // VPN server IP
+        {
+            fprintf(stderr, "Invalid IP\n");
+            exit(1);
+        }
+        struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
+        rtnl_route_nh_set_gateway(nh, gateway);
+        rtnl_route_add_nexthop(route, nh);
+
+        rtnl_route_add(sock, route, 0);
 
         // cleanup
         rtnl_addr_put(addr);
