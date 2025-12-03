@@ -105,7 +105,7 @@ int configureInterface(char * ifName)
                 struct nl_addr *dst, *gateway;
 
                 // default route
-                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
+                nl_addr_parse("10.0.0.0/24", AF_INET, &dst); // route everything
                 rtnl_route_set_dst(route, dst);
 
                 // next-hop via your VPN server
