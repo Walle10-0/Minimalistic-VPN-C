@@ -6,6 +6,3 @@ VPNclient.out: VPNclient.o
 
 VPNclient.o: VPNclient.c
 	gcc $(CFLAGS) -c VPNclient.c
-
-clean:
-	rm -f VPNclient.o VPNclient

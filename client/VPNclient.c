@@ -76,28 +76,29 @@ void configureInterface(char * ifName)
     struct rtnl_link *link;
     rtnl_link_get_kernel(sock, 0, "tun0", &link);
 
-    if (!link) {
+    if (!link)
+    {
         fprintf(stderr, "Failed to allocate link for eth0.\n");
-        nl_socket_free(sock);
-        return 1;
     }
-    
-    // bring it up
-    rtnl_link_set_flags(link, IFF_UP);
-    rtnl_link_add(sock, link, NLM_F_CREATE);
+    else
+    {
+        // bring it up
+        rtnl_link_set_flags(link, IFF_UP);
+        rtnl_link_add(sock, link, NLM_F_CREATE);
 
-    // add an IPv4 address
-    struct rtnl_addr *addr = rtnl_addr_alloc();
-    rtnl_addr_set_local(addr, inet_addr("10.8.0.2"));
-    rtnl_addr_set_prefixlen(addr, 24);
-    rtnl_addr_set_link(addr, rtnl_link_get_ifindex(link));
-    rtnl_addr_add(sock, addr, 0);
+        // add an IPv4 address
+        struct rtnl_addr *addr = rtnl_addr_alloc();
+        rtnl_addr_set_local(addr, inet_addr("10.8.0.2"));
+        rtnl_addr_set_prefixlen(addr, 24);
+        rtnl_addr_set_link(addr, link);
+        rtnl_addr_add(sock, addr, 0);
 
-    // cleanup
-    rtnl_addr_put(addr);
-    rtnl_link_put(link);
+        // cleanup
+        rtnl_addr_put(addr);
+        rtnl_link_put(link);
+    }
+
     nl_socket_free(sock);
-
 }
 
 void main()
