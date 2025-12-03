@@ -279,5 +279,5 @@ void main()
     pthread_join(reciever, NULL);
 
 
-   close(interfaceFd);
+   close(context.interfaceFd);
 }
