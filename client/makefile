@@ -8,4 +8,4 @@ VPNclient.o: VPNclient.c
 	gcc $(CFLAGS) -c VPNclient.c
 
 clean:
-	rm VPNclient.o VPNclient
+	rm -f VPNclient.o VPNclient

@@ -4,7 +4,7 @@
 #include <fcntl.h>
 
 // Linux TUN/TAP headers
-#include <linux/if.h>
+#include <net/if.h>
 #include <linux/if_tun.h>
 
 // netlink libraries
