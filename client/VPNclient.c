@@ -131,6 +131,9 @@ void configureInterface(char * ifName)
         rtnl_route_nh_set_gateway(nh, gateway);
         rtnl_route_add_nexthop(route, nh);
 
+        // Set metric (priority)
+        rtnl_route_set_priority(route, 0); // lower = preferred
+
         rtnl_route_add(sock, route, 0);
 
         // cleanup
