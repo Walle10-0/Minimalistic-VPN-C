@@ -198,9 +198,6 @@ int setupSocket(unsigned short fileServPort)
 	if (bind(servSockAddr, (struct sockaddr *) &localServAddr, sizeof(localServAddr)) < 0)
 		DieWithError("bind() failed");
 
-	/* Mark the socket so it will listen for incoming connections */
-	if (listen(servSockAddr, MAXPENDING) < 0)
-		DieWithError("listen() failed");
 	return servSockAddr;
 }
 
