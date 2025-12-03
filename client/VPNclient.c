@@ -74,7 +74,7 @@ void configureInterface(char * ifName)
 
 
     struct rtnl_link *link;
-    rtnl_link_get_kernel(sock, 0, "tun0", &link);
+    rtnl_link_get_kernel(sock, 0, ifName, &link);
 
     if (!link)
     {
@@ -105,7 +105,7 @@ void configureInterface(char * ifName)
         if (err < 0) {
             fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
         }
-        
+
         // cleanup
         rtnl_addr_put(addr);
         rtnl_link_put(link);
