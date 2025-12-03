@@ -246,19 +246,13 @@ void setupVPNContext(struct vpn_context * context)
     // Convert string IP to binary
     if (inet_pton(AF_INET, VPN_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
     {
-        perror("inet_pton failed");
-        exit(1);
+        DieWithError("inet_pton failed");
     }
 
 }
 
-// takes in vpn_context struct pointer
-void* spawnTransmitterThread(void* arg)
+void transmitterLoop(struct vpn_context * context)
 {
-    printf("start Transmit--------------------\n");
-    
-    struct vpn_context * context = (struct vpn_context *)arg;
-
     ssize_t nread;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
@@ -269,6 +263,8 @@ void* spawnTransmitterThread(void* arg)
 
         printf("Tx %zd bytes \n", nread);
 
+        // this is where encryption would go
+
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
             0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
@@ -277,18 +273,24 @@ void* spawnTransmitterThread(void* arg)
         sendto(context->vpnSock, buf, nread,
             0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
     }
+}
+
+// takes in vpn_context struct pointer
+void* spawnTransmitterThread(void* arg)
+{
+    printf("start Transmit--------------------\n");
+    
+    struct vpn_context * context = (struct vpn_context *)arg;
+
+    transmitterLoop(context);
     
     printf("end Transmit--------------------\n");
     
     pthread_exit(NULL);
 }
 
-void* spawnRecieverThread(void* arg)
-{	
-	printf("start Listen--------------------\n");
-	
-	struct vpn_context * context = (struct vpn_context *)arg;
-
+void recieverLoop(struct vpn_context * context)
+{
     ssize_t nread;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
@@ -301,12 +303,33 @@ void* spawnRecieverThread(void* arg)
 
         printf("Rx %zd bytes \n", nread);
 
+        // this is where decryption would go
+
         write(context->interfaceFd, buf, nread);
     }
+}
+
+void* spawnRecieverThread(void* arg)
+{	
+	printf("start Listen--------------------\n");
 	
+	struct vpn_context * context = (struct vpn_context *)arg;
+
+    recieverLoop(context);
+
 	printf("end Listen--------------------\n");
 	
 	pthread_exit(NULL);
+}
+
+void spawnThreads(struct vpn_context * context)
+{
+    pthread_t transmitter, reciever;
+    pthread_create(&transmitter, NULL, &spawnTransmitterThread, context);
+    pthread_create(&reciever, NULL, &spawnRecieverThread, context);
+
+    pthread_join(transmitter, NULL);
+    pthread_join(reciever, NULL);
 }
 
 void main()
@@ -315,13 +338,7 @@ void main()
     struct vpn_context context;
     setupVPNContext(&context);
 
-    pthread_t transmitter, reciever;
-    pthread_create(&transmitter, NULL, &spawnTransmitterThread, &context);
-    pthread_create(&reciever, NULL, &spawnRecieverThread, &context);
+    spawnThreads(&context);
 
-    pthread_join(transmitter, NULL);
-    pthread_join(reciever, NULL);
-
-
-   close(context.interfaceFd);
+    close(context.interfaceFd);
 }
