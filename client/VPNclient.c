@@ -56,7 +56,7 @@ int createTunTap(char *name)
 		memcpy(iface_name_out, setiff_request.ifr_name, IFNAMSIZ);
 	}
         */
-    print(setIfrRequest.ifr_name);
+    printf("%s", setIfrRequest.ifr_name);
     
     return tunFd;
 }
