@@ -73,6 +73,7 @@ void main()
     else
     {
         printf("Error creating TUN/TAP interface %s\n", TUNTAP_NAME);
+        printf("Are you root?\n");
         return;
     }
 
