@@ -204,7 +204,7 @@ int setupSocket(unsigned short fileServPort)
 void setupVPNContext(struct vpn_context * context)
 {
     // zero it out
-    memset(&context, 0, sizeof(context));
+    memset(context, 0, sizeof(context));
 
     // interface name
     char interfaceName[IFNAMSIZ];
@@ -267,7 +267,7 @@ void* spawnTransmitterThread(void* arg)
         nread = read(context->interfaceFd, buf, sizeof(buf));
         nread_net = htons((uint16_t)nread);
 
-        printf("Tx %d bytes \n", nread);
+        printf("Tx %zd bytes \n", nread);
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -299,7 +299,7 @@ void* spawnRecieverThread(void* arg)
 
         recvfrom(context->vpnSock, buf, nread, 0, NULL, NULL);
 
-        printf("Rx %d bytes \n", nread);
+        printf("Rx %zd bytes \n", nread);
 
         write(context->interfaceFd, buf, nread);
     }
