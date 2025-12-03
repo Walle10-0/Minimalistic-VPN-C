@@ -271,11 +271,11 @@ void* spawnTransmitterThread(void* arg)
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
-            0, (struct socketaddr *)&(context->serverAddr), sizeof(context->serverAddr));
+            0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
 
         // send actual packet
         sendto(context->vpnSock, buf, nread,
-            0, (struct socketaddr *)&(context->serverAddr), sizeof(context->serverAddr));
+            0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
     }
     
     printf("end Transmit--------------------\n");
