@@ -2,4 +2,4 @@ VPNclient.out:	VPNclient.o
 	gcc VPNclient.o -o VPNclient.out
 
 VPNclient.o:	VPNclient.c
-	gcc -c VPNclient.c -lnl-3
+	gcc -I /usr/include/libnl3/ -c VPNclient.c
