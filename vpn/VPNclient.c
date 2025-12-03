@@ -32,7 +32,7 @@
 #define TUNTAP_NAME "vpnclient"
 
 #define VPN_CLIENT_IP "10.8.0.2/24"
-#define VPN_SERVER_IP "10.8.0.1"
+#define VPN_SERVER_IP "192.168.122.85"
 #define VPN_PORT 55555
 
 #define MAX_BUF_SIZE 2000
