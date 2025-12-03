@@ -88,11 +88,24 @@ void configureInterface(char * ifName)
 
         // add an IPv4 address
         struct rtnl_addr *addr = rtnl_addr_alloc();
-        rtnl_addr_set_local(addr, inet_addr("10.8.0.2"));
-        rtnl_addr_set_prefixlen(addr, 24);
-        rtnl_addr_set_link(addr, link);
-        rtnl_addr_add(sock, addr, 0);
 
+        struct nl_addr *local;
+
+
+        if (nl_addr_parse("10.8.0.2/24", AF_INET, &local) < 0)
+        {
+            fprintf(stderr, "Invalid IP\n");
+            exit(1);
+        }
+
+        rtnl_addr_set_local(addr, local);
+        rtnl_addr_set_link(addr, link);
+        
+        int err = rtnl_addr_add(sock, addr, 0);
+        if (err < 0) {
+            fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
+        }
+        
         // cleanup
         rtnl_addr_put(addr);
         rtnl_link_put(link);
