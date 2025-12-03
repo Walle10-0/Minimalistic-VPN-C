@@ -201,46 +201,9 @@ int setupSocket(unsigned short fileServPort)
 	return servSockAddr;
 }
 
-// takes in vpn_context struct pointer
-void* spawnTransmitterThread(void* arg)
+void setupVPNContext(struct vpn_context * context)
 {
-    printf("start Transmit--------------------\n");
-    
-    struct vpn_context * context = (struct vpn_context *)arg;
-
-    /*
-        int len;
-    char buf[MAX_BUF_SIZE];
-	while(1) 
-	{
-     len = read(interfaceFd, buf, sizeof(buf));
-
-     printf("Rx %d bytes \n", len);
-     len=0;
-   }
-    */
-    printf("end Transmit--------------------\n");
-    
-    pthread_exit(NULL);
-}
-
-void* spawnRecieverThread(void* arg)
-{	
-	printf("start Listen--------------------\n");
-	
-	struct vpn_context * context = (struct vpn_context *)arg;
-
-    
-	
-	printf("end Listen--------------------\n");
-	
-	pthread_exit(NULL);
-}
-
-void main()
-{
-    // create shared context object
-    struct vpn_context context;
+    // zero it out
     memset(&context, 0, sizeof(context));
 
     // interface name
@@ -258,8 +221,7 @@ void main()
     else
     {
         printf("Error creating TUN/TAP interface %s\n", TUNTAP_NAME);
-        printf("Are you root?\n");
-        return;
+        DieWithError("Are you root?\n");
     }
     
     // setup VPN socket
@@ -272,10 +234,73 @@ void main()
     }
     else
     {
-        printf("Error creating VPN socket\n");
         close(context.interfaceFd);
-        return;
+        DieWithError("Error creating VPN socket\n");
     }
+}
+
+// takes in vpn_context struct pointer
+void* spawnTransmitterThread(void* arg)
+{
+    printf("start Transmit--------------------\n");
+    
+    struct vpn_context * context = (struct vpn_context *)arg;
+
+    ssize_t nread;
+    uint16_t nread_net;
+    char buf[MAX_BUF_SIZE];
+	while(1) 
+	{
+        nread = read(context->interfaceFd, buf, sizeof(buf));
+        nread_net = htons((uint16_t)nread);
+
+        printf("Tx %d bytes \n", nread);
+
+        // send length header
+        sendto(context->vpnSock, &nread_net, sizeof(nread_net),
+            0, &(sizeof(context->serverAddr)), sizeof(context->serverAddr));
+
+        // send actual packet
+        sendto(context->vpnSock, buf, nread,
+            0, &(sizeof(context->serverAddr)), sizeof(context->serverAddr));
+    }
+    
+    printf("end Transmit--------------------\n");
+    
+    pthread_exit(NULL);
+}
+
+void* spawnRecieverThread(void* arg)
+{	
+	printf("start Listen--------------------\n");
+	
+	struct vpn_context * context = (struct vpn_context *)arg;
+
+    ssize_t nread;
+    uint16_t nread_net;
+    char buf[MAX_BUF_SIZE];
+	while(1) 
+	{
+        recvfrom(context->vpnSock, &nread_net, sizeof(nread_net), 0, NULL, NULL);
+        nread = ntohs(nread_net);
+
+        recvfrom(context->vpnSock, buf, nread, 0, NULL, NULL);
+
+        printf("Rx %d bytes \n", nread);
+
+        write(context->interfaceFd, buf, nread);
+    }
+	
+	printf("end Listen--------------------\n");
+	
+	pthread_exit(NULL);
+}
+
+void main()
+{
+    // create shared context object
+    struct vpn_context context;
+    setupVPNContext(&context);
 
     pthread_t transmitter, reciever;
     pthread_create(&transmitter, NULL, &spawnTransmitterThread, &context);
