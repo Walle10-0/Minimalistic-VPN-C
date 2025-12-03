@@ -36,6 +36,7 @@
 #define VPN_PORT 55555
 
 #define MAX_BUF_SIZE 2000
+#define MAXPENDING 5
 
 struct vpn_context {
     int interfaceFd;
