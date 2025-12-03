@@ -1,5 +1,11 @@
-VPNclient.out:	VPNclient.o
-	gcc VPNclient.o -o VPNclient.out
+CFLAGS = -I/usr/include/libnl3
+LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3
 
-VPNclient.o:	VPNclient.c
-	gcc -I /usr/include/libnl3/ -c VPNclient.c
+VPNclient.out: VPNclient.o
+	gcc VPNclient.o -o VPNclient.out $(LDFLAGS)
+
+VPNclient.o: VPNclient.c
+	gcc $(CFLAGS) -c VPNclient.c
+
+clean:
+	rm VPNclient.o VPNclient

@@ -8,6 +8,6 @@ built for Linux
 requires libnl3 to build
 
 ```bash
-sudo apt-get install libnl-3-dev libnl-genl-3-dev 
+sudo apt-get install libnl-3-dev libnl-genl-3-dev libnl-route-3-dev
 ```
 

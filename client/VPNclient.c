@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
-
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -122,6 +120,8 @@ void main()
         printf("Are you root?\n");
         return;
     }
+
+    configureInterface(interfaceName);
 
 	while(1) 
 	{
