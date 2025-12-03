@@ -237,6 +237,19 @@ void setupVPNContext(struct vpn_context * context)
         close(context.interfaceFd);
         DieWithError("Error creating VPN socket\n");
     }
+
+    // set up server address struct
+    memset(&context.serverAddr, 0, sizeof(context.serverAddr));
+    localServAddr.sin_family = AF_INET;                /* Internet address family */
+	localServAddr.sin_port = htons(VPN_PORT);      /* Local port */
+
+    // Convert string IP to binary
+    if (inet_pton(AF_INET, VPN_SERVER_IP, &serverAddr.sin_addr) <= 0)
+    {
+        perror("inet_pton failed");
+        exit(1);
+    }
+
 }
 
 // takes in vpn_context struct pointer
