@@ -44,6 +44,97 @@ struct vpn_context {
     // encryption keys, etc.
 };
 
+// I should use this more often ... or not
+void DieWithError(char *errorMessage)
+{
+    perror(errorMessage);
+    exit(1);
+}
+
+// configure the TUN/TAP interface with Netlink
+int configureInterface(char * ifName)
+{
+    int err = 0;
+    struct nl_sock *sock = nl_socket_alloc();
+    nl_connect(sock, NETLINK_ROUTE);
+
+
+    struct rtnl_link *link;
+    rtnl_link_get_kernel(sock, 0, ifName, &link);
+
+    if (!link)
+    {
+        fprintf(stderr, "Failed to allocate link for eth0.\n");
+        err = -1;
+    }
+    else
+    {
+        // bring up interface
+        unsigned int flags = rtnl_link_get_flags(link);
+        flags |= IFF_UP;
+        rtnl_link_set_flags(link, flags);
+
+        // apply changes to existing interface
+        rtnl_link_change(sock, link, link, 0);
+        
+        // add an IPv4 address
+        struct rtnl_addr *addr = rtnl_addr_alloc();
+
+        struct nl_addr *local;
+
+        err = nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local); // VPN client IP
+        if (err < 0)
+        {
+            fprintf(stderr, "Invalid IP\n");
+        }
+        else
+        {
+            rtnl_addr_set_local(addr, local);
+            rtnl_addr_set_link(addr, link);
+        
+            err = rtnl_addr_add(sock, addr, 0);
+            if (err < 0) {
+                fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
+            }
+            else
+            {
+                // re-route all traffic through the VPN
+                struct rtnl_route *route = rtnl_route_alloc();
+                struct nl_addr *dst, *gateway;
+
+                // default route
+                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
+                rtnl_route_set_dst(route, dst);
+
+                // next-hop via your VPN server
+                err = nl_addr_parse(VPN_SERVER_IP, AF_INET, &gateway); // VPN server IP
+                if (err < 0) 
+                {
+                    fprintf(stderr, "Invalid IP\n");
+                }
+                else
+                {
+                    struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
+                    rtnl_route_nh_set_gateway(nh, gateway);
+                    rtnl_route_add_nexthop(route, nh);
+
+                    // Set metric (priority)
+                    rtnl_route_set_priority(route, 0); // lower = preferred
+
+                    rtnl_route_add(sock, route, 0);
+
+                    // cleanup
+                    rtnl_addr_put(addr);
+                    rtnl_link_put(link);
+                }
+            }
+        }
+    }
+    nl_socket_free(sock);
+
+    return err;
+}
+
 // create TUN interface for VPN client
 int createInterface(char *interfaceName)
 {
@@ -86,90 +177,6 @@ int createInterface(char *interfaceName)
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
 
-int configureInterface(char * ifName)
-{
-    int err = 0;
-    struct nl_sock *sock = nl_socket_alloc();
-    nl_connect(sock, NETLINK_ROUTE);
-
-
-    struct rtnl_link *link;
-    rtnl_link_get_kernel(sock, 0, ifName, &link);
-
-    if (!link)
-    {
-        fprintf(stderr, "Failed to allocate link for eth0.\n");
-        err = -1
-    }
-    else
-    {
-        // bring up interface
-        unsigned int flags = rtnl_link_get_flags(link);
-        flags |= IFF_UP;
-        rtnl_link_set_flags(link, flags);
-
-        // apply changes to existing interface
-        rtnl_link_change(sock, link, link, 0);
-        
-        // add an IPv4 address
-        struct rtnl_addr *addr = rtnl_addr_alloc();
-
-        struct nl_addr *local;
-
-        err = nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local); // VPN client IP
-        if (err < 0)
-        {
-            fprintf(stderr, "Invalid IP\n");
-        }
-        else
-        {
-            rtnl_addr_set_local(addr, local);
-            rtnl_addr_set_link(addr, link);
-        
-            err = rtnl_addr_add(sock, addr, 0);
-            if (err < 0) {
-                fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
-            }
-            else
-            {
-                // re-route all traffic through the VPN
-                struct rtnl_route *route = rtnl_route_alloc();
-                struct nl_addr *dst, *gateway;
-
-                // default route
-                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
-                rtnl_route_set_dst(route, dst);
-
-                // next-hop via your VPN server
-                err = nl_addr_parse(VPN_SERVER_IP, AF_INET, &gateway) // VPN server IP
-                if (err < 0) 
-                {
-                    fprintf(stderr, "Invalid IP\n");
-                }
-                else
-                {
-                    struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
-                    rtnl_route_nh_set_gateway(nh, gateway);
-                    rtnl_route_add_nexthop(route, nh);
-
-                    // Set metric (priority)
-                    rtnl_route_set_priority(route, 0); // lower = preferred
-
-                    rtnl_route_add(sock, route, 0);
-
-                    // cleanup
-                    rtnl_addr_put(addr);
-                    rtnl_link_put(link);
-                }
-            }
-        }
-    }
-
-    nl_socket_free(sock);
-
-    return err;
-}
-
 int setupSocket(unsigned short fileServPort)
 {
 	int servSockAddr;
@@ -203,6 +210,7 @@ void* spawnTransmitterThread(void* arg)
     
     struct vpn_context * context = (struct vpn_context *)arg;
 
+    /*
         int len;
     char buf[MAX_BUF_SIZE];
 	while(1) 
@@ -212,7 +220,7 @@ void* spawnTransmitterThread(void* arg)
      printf("Rx %d bytes \n", len);
      len=0;
    }
-    
+    */
     printf("end Transmit--------------------\n");
     
     pthread_exit(NULL);
