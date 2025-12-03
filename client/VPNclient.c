@@ -211,10 +211,10 @@ void setupVPNContext(struct vpn_context * context)
     strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
 
     // create the interface and get a filedecriptor we can read and write to
-    context.interfaceFd = createInterface(interfaceName);
+    context->interfaceFd = createInterface(interfaceName);
 
     // check for error
-    if (context.interfaceFd  > 0)
+    if (context->interfaceFd  > 0)
     {
         printf("TUN/TAP interface %s created successfully with name %s!\n", TUNTAP_NAME, interfaceName);
     }
@@ -225,26 +225,26 @@ void setupVPNContext(struct vpn_context * context)
     }
     
     // setup VPN socket
-    context.vpnSock = setupSocket(VPN_PORT); // hardcoded port for now
+    context->vpnSock = setupSocket(VPN_PORT); // hardcoded port for now
 
     // check for error
-    if (context.vpnSock  > 0)
+    if (context->vpnSock  > 0)
     {
         printf("VPN socket created successfully!\n");
     }
     else
     {
-        close(context.interfaceFd);
+        close(context->interfaceFd);
         DieWithError("Error creating VPN socket\n");
     }
 
     // set up server address struct
-    memset(&context.serverAddr, 0, sizeof(context.serverAddr));
-    localServAddr.sin_family = AF_INET;                /* Internet address family */
-	localServAddr.sin_port = htons(VPN_PORT);      /* Local port */
+    memset(&context->serverAddr, 0, sizeof(context->serverAddr));
+    context->serverAddr.sin_family = AF_INET;                /* Internet address family */
+	context->serverAddr.sin_port = htons(VPN_PORT);      /* Local port */
 
     // Convert string IP to binary
-    if (inet_pton(AF_INET, VPN_SERVER_IP, &serverAddr.sin_addr) <= 0)
+    if (inet_pton(AF_INET, VPN_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
     {
         perror("inet_pton failed");
         exit(1);
@@ -271,11 +271,11 @@ void* spawnTransmitterThread(void* arg)
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
-            0, &(sizeof(context->serverAddr)), sizeof(context->serverAddr));
+            0, &(context->serverAddr), sizeof(context->serverAddr));
 
         // send actual packet
         sendto(context->vpnSock, buf, nread,
-            0, &(sizeof(context->serverAddr)), sizeof(context->serverAddr));
+            0, &(context->serverAddr), sizeof(context->serverAddr));
     }
     
     printf("end Transmit--------------------\n");
