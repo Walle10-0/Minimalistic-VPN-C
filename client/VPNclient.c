@@ -82,10 +82,14 @@ void configureInterface(char * ifName)
     }
     else
     {
-        // bring it up
-        rtnl_link_set_flags(link, IFF_UP);
-        rtnl_link_add(sock, link, NLM_F_CREATE);
+        // bring up interface
+        unsigned int flags = rtnl_link_get_flags(link);
+        flags |= IFF_UP;
+        rtnl_link_set_flags(link, flags);
 
+        // apply changes to existing interface
+        rtnl_link_change(sock, link, link, 0);
+        
         // add an IPv4 address
         struct rtnl_addr *addr = rtnl_addr_alloc();
 
