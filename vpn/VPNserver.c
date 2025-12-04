@@ -234,8 +234,7 @@ void* spawnTransmitterThread(void* arg)
 bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
 {
     // the packet contained within the buffer
-    struct iphdr *ip = (struct iphdr *)(data + 4);
-    //struct iphdr *ip = (struct iphdr *)data;
+    struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
     uint32_t incomingClientVpnIp = ntohl(ip->saddr);
