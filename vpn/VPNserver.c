@@ -240,7 +240,7 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
     //struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
-    uint32_t incomingClientVpnIp = ip->saddr;
+    uint32_t incomingClientVpnIp = ip->daddr;
     //uint32_t incomingClientVpnIp = ip->saddr;
     printf("IP-src :: %d\n", (int)incomingClientVpnIp);
 
