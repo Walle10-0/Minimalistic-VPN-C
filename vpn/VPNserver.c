@@ -35,6 +35,9 @@
 
 #define HARDCODED_CLIENT_IP "192.168.122.155"
 
+uint32_t clientVpnIp[MAX_VPN_CLIENTS];
+struct sockaddr_in clientRealIp[MAX_VPN_CLIENTS];
+
 char *getDefaultInterface(struct nl_sock *sock)
 {
     struct nl_cache *route_cache = NULL;
@@ -136,6 +139,29 @@ int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
     return err;
 }
 
+struct sockaddr_in * getRealIp(char * data)
+{
+    struct sockaddr_in * result = NULL;
+
+    // the packet contained within the buffer
+    struct iphdr *ip = (struct iphdr *)data;
+
+    // fill in VPN IP
+    uint32_t incomingClientVpnIp = ip->daddr;
+
+    int i = 0;
+    for (i < MAX_VPN_CLIENTS && result == NULL)
+    {
+        if (clientVpnIp[i] == incomingClientVpnIp)
+        {
+            result = &clientRealIp[i];
+        }
+        i++
+    }
+    printf("NotFound\n")
+    return result;
+}
+
 void transmitterLoop(struct vpn_context * context)
 {
     ssize_t nread;
@@ -143,20 +169,23 @@ void transmitterLoop(struct vpn_context * context)
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
     char data[MAX_BUF_SIZE];
-    struct sockaddr_in dest_ip;
+    struct sockaddr_in * dest_ip;
 
-    memset(&dest_ip, 0, sizeof(dest_ip));
-    dest_ip.sin_family = AF_INET;           // IPv4
-    dest_ip.sin_port = htons(VPN_PORT);   // very important
-    inet_pton(AF_INET, HARDCODED_CLIENT_IP, &dest_ip.sin_addr); // todo: this needs to be the clients REAL IP dynamically
+    //memset(&dest_ip, 0, sizeof(dest_ip));
+    //dest_ip.sin_family = AF_INET;           // IPv4
+    //dest_ip.sin_port = htons(VPN_PORT);   // very important
+    //inet_pton(AF_INET, HARDCODED_CLIENT_IP, &dest_ip.sin_addr); // todo: this needs to be the clients REAL IP dynamically
 
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
         nread_net = htons((uint16_t)nread);
 
+        // print the length
+        printf("Tx %zd bytes \n", nread);
+
         // the packet contained within the buffer
-        struct iphdr *ip = (struct iphdr *)buf;
+        //struct iphdr *ip = (struct iphdr *)buf;
 
         // extract destination IP address
         //memset(&dest_ip, 0, sizeof(dest_ip));
@@ -164,14 +193,14 @@ void transmitterLoop(struct vpn_context * context)
         //dest_ip.sin_port = htons(VPN_PORT);   // very important
         //dest_ip.sin_addr.s_addr = ip->daddr;
 
-        printf("Tx %zd bytes \n", nread);
+        dest_ip = getRealIp(buf);
 
         // this is where encryption would go
         encryptData(buf, nread, data, &ndata);
 
         // send length header
         if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
-            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip)) < 0)
+            0, (struct sockaddr *)dest_ip, sizeof(*dest_ip)) < 0)
         {
             printf("Error sending length header\n");
             continue;
@@ -179,7 +208,7 @@ void transmitterLoop(struct vpn_context * context)
 
         // send actual packet
         if (sendto(context->vpnSock, data, ndata,
-            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip)) < 0)
+            0, (struct sockaddr *)dest_ip, sizeof(*dest_ip)) < 0)
         {
             printf("Error sending length header\n");
             continue;
@@ -202,6 +231,27 @@ void* spawnTransmitterThread(void* arg)
     pthread_exit(NULL);
 }
 
+bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
+{
+    // the packet contained within the buffer
+    struct iphdr *ip = (struct iphdr *)data;
+
+    // fill in VPN IP
+    uint32_t incomingClientVpnIp = ip->saddr;
+
+    for (int i = 0; i < MAX_VPN_CLIENTS; i++)
+    {
+        if (clientVpnIp[i] == 0 || clientVpnIp[i] == incomingClientVpnIp)
+        {
+            clientVpnIp[i] = incomingClientVpnIp;
+            clientRealIp[i] = *incomingClientRealIp;
+            return true;
+        }
+    }
+    printf("CacheFull\n")
+    return false; // cache full
+}
+
 void recieverLoop(struct vpn_context * context)
 {
     ssize_t nread;
@@ -209,17 +259,23 @@ void recieverLoop(struct vpn_context * context)
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
     char data[MAX_BUF_SIZE];
+
+    struct sockaddr_in incomingClientRealIp;
+    socklen_t clientRealIpLen = sizeof(struct sockaddr_i);
 	while(1) 
 	{
         recvfrom(context->vpnSock, &nread_net, sizeof(nread_net), 0, NULL, NULL);
         nread = ntohs(nread_net);
 
-        recvfrom(context->vpnSock, buf, nread, 0, NULL, NULL);
+        recvfrom(context->vpnSock, buf, nread, 0, &incomingClientRealIp, &clientRealIpLen);
 
+        // print the length
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
         decryptData(buf, nread, data, &ndata);
+
+        cacheRealIp(incomingClientRealIp, data);
 
         write(context->interfaceFd, data, ndata);
     }
@@ -253,6 +309,9 @@ void main()
     // create shared context object
     struct vpn_context context;
     setupVPNContext(&context, VPN_PRIVATE_SERVER_IP, addServerRoutingRules);
+
+    memset(clientVpnIp, 0, sizeof(clientVpnIp)); // initialize
+    memset(clientRealIp, 0, sizeof(clientRealIp)); // initialize
 
     spawnThreads(&context);
 

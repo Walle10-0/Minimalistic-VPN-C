@@ -13,6 +13,7 @@
 #define VPN_NETWORK "10.8.0.0/24"
 #define VPN_PUBLIC_SERVER_IP "192.168.122.85"
 #define VPN_PORT 55555
+#define MAX_VPN_CLIENTS 20
 
 // buffer constants
 #define MAX_BUF_SIZE 2000
