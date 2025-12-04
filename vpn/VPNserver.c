@@ -33,7 +33,7 @@
 
 #include "VPNtools.h"
 
-#define HARDCODED_CLIENT_IP = "192.168.122.155"
+#define HARDCODED_CLIENT_IP "192.168.122.155"
 
 char *getDefaultInterface(struct nl_sock *sock)
 {
