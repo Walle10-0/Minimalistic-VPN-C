@@ -1,31 +1,78 @@
-CFLAGS = -I/usr/include/libnl3
+# got tired of writing this myself. this is more robust
+
+# ---------------------------------------------------------
+# CONFIG
+# ---------------------------------------------------------
+
+CC      = gcc
+CFLAGS  = -Iinclude -I/usr/include/libnl3
 LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3 -lpthread -lcrypto
 
-all: client server clean
+# Utility modules inside ./util/
+UTILS = VPNcrypt VPNnetwork VPNtools
+UTIL_SRC = $(addprefix util/, $(addsuffix .c, $(UTILS)))
+UTIL_OBJ = $(addprefix build/, $(addsuffix .o, $(UTILS)))
 
-client: VPNclient.o VPNtools.o VPNnetwork.o VPNcrypt.o
-	gcc VPNclient.o VPNtools.o VPNnetwork.o VPNcrypt.o -o VPNclient.out $(LDFLAGS)
+# Output directories
+BUILD_DIR = build
+BIN_DIR   = bin
 
-VPNclient.o: VPNclient.c
-	gcc $(CFLAGS) -c VPNclient.c
+# Main programs
+CLIENT_SRC = VPNclient.c
+SERVER_SRC = VPNserver.c
 
-server: VPNserver.o VPNtools.o VPNnetwork.o VPNcrypt.o
-	gcc VPNserver.o VPNtools.o VPNnetwork.o VPNcrypt.o -o VPNserver.out $(LDFLAGS)
+CLIENT_OBJ = $(BUILD_DIR)/VPNclient.o
+SERVER_OBJ = $(BUILD_DIR)/VPNserver.o
 
-VPNserver.o: VPNserver.c
-	gcc $(CFLAGS) -c VPNserver.c
+CLIENT_BIN = $(BIN_DIR)/VPNclient.out
+SERVER_BIN = $(BIN_DIR)/VPNserver.out
 
-VPNcrypt.o: VPNcrypt.c
-	gcc $(CFLAGS) -c VPNcrypt.c
+# ---------------------------------------------------------
+# DEFAULT
+# ---------------------------------------------------------
 
-VPNnetwork.o: VPNnetwork.c
-	gcc $(CFLAGS) -c VPNnetwork.c
+all: client server
 
-VPNtools.o: VPNtools.c
-	gcc $(CFLAGS) -c VPNtools.c
+# ---------------------------------------------------------
+# BUILD TARGETS
+# ---------------------------------------------------------
+
+client: $(CLIENT_BIN)
+server: $(SERVER_BIN)
+
+$(CLIENT_BIN): $(CLIENT_OBJ) $(UTIL_OBJ) | $(BIN_DIR)
+	$(CC) $(CLIENT_OBJ) $(UTIL_OBJ) -o $@ $(LDFLAGS)
+
+$(SERVER_BIN): $(SERVER_OBJ) $(UTIL_OBJ) | $(BIN_DIR)
+	$(CC) $(SERVER_OBJ) $(UTIL_OBJ) -o $@ $(LDFLAGS)
+
+# ---------------------------------------------------------
+# COMPILATION RULES
+# ---------------------------------------------------------
+
+# Rule for compiling utility modules from util/*.c → build/*.o
+build/%.o: util/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for compiling client/server from root directory
+build/%.o: %.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# ---------------------------------------------------------
+# DIRECTORY CREATION
+# ---------------------------------------------------------
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+# ---------------------------------------------------------
+# CLEAN
+# ---------------------------------------------------------
 
 clean:
-	rm -f *.o
+	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-purge:
-	rm -f *.o *.out
+.PHONY: all client server clean
