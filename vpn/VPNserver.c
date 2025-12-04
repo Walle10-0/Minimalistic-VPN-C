@@ -150,7 +150,7 @@ struct sockaddr_in * getRealIp(char * data)
 
     for (int i=0; i<MAX_VPN_CLIENTS; i++) {
         if (clientVpnIp[i] == vpnDest) {
-            printf("gottem\n");
+            //printf("gottem\n");
             return &clientRealIp[i];
         }
     }
@@ -167,11 +167,6 @@ void transmitterLoop(struct vpn_context * context)
     char data[MAX_BUF_SIZE];
     struct sockaddr_in * dest_ip;
 
-    //memset(&dest_ip, 0, sizeof(dest_ip));
-    //dest_ip.sin_family = AF_INET;           // IPv4
-    //dest_ip.sin_port = htons(VPN_PORT);   // very important
-    //inet_pton(AF_INET, HARDCODED_CLIENT_IP, &dest_ip.sin_addr); // todo: this needs to be the clients REAL IP dynamically
-
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
@@ -179,15 +174,6 @@ void transmitterLoop(struct vpn_context * context)
 
         // print the length
         printf("Tx %zd bytes \n", nread);
-
-        // the packet contained within the buffer
-        //struct iphdr *ip = (struct iphdr *)buf;
-
-        // extract destination IP address
-        //memset(&dest_ip, 0, sizeof(dest_ip));
-        //dest_ip.sin_family = AF_INET;           // IPv4
-        //dest_ip.sin_port = htons(VPN_PORT);   // very important
-        //dest_ip.sin_addr.s_addr = ip->daddr;
 
         dest_ip = getRealIp(buf);
 
@@ -215,7 +201,6 @@ void transmitterLoop(struct vpn_context * context)
             printf("Error sending length header\n");
             continue;
         }
-
     }
 }
 
@@ -242,12 +227,13 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
     // fill in VPN IP
     uint32_t incomingClientVpnIp = ip->daddr;
     //uint32_t incomingClientVpnIp = ip->saddr;
-    printf("IP-src :: %d\n", (int)incomingClientVpnIp);
+    //printf("IP-src :: %d\n", (int)incomingClientVpnIp);
 
     for (int i = 0; i < MAX_VPN_CLIENTS; i++)
     {
         if (clientVpnIp[i] == 0 || clientVpnIp[i] == incomingClientVpnIp)
         {
+            printf("cache :: %d at %d\n", (int)incomingClientVpnIp, i);
             clientVpnIp[i] = incomingClientVpnIp;
             clientRealIp[i] = incomingClientRealIp;
             return true;
