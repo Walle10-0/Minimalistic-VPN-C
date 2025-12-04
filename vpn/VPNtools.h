@@ -39,4 +39,9 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
 
 void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *));
 
+// hook for later encryption and decryption
+int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen);
+
+int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen);
+
 #endif

@@ -33,6 +33,8 @@
 
 #include "VPNtools.h"
 
+#define HARDCODED_CLIENT_IP = "192.168.122.155"
+
 char *getDefaultInterface(struct nl_sock *sock)
 {
     struct nl_cache *route_cache = NULL;
@@ -137,14 +139,16 @@ int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
 void transmitterLoop(struct vpn_context * context)
 {
     ssize_t nread;
+    ssize_t ndata;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
+    char data[MAX_BUF_SIZE];
     struct sockaddr_in dest_ip;
 
     memset(&dest_ip, 0, sizeof(dest_ip));
     dest_ip.sin_family = AF_INET;           // IPv4
     dest_ip.sin_port = htons(VPN_PORT);   // very important
-    inet_pton(AF_INET, VPN_CLIENT_IP, &dest_ip.sin_addr);
+    inet_pton(AF_INET, HARDCODED_CLIENT_IP, &dest_ip.sin_addr); // todo: this needs to be the clients REAL IP dynamically
 
 	while(1) 
 	{
@@ -163,6 +167,7 @@ void transmitterLoop(struct vpn_context * context)
         printf("Tx %zd bytes \n", nread);
 
         // this is where encryption would go
+        encryptData(buf, nread, data, &ndata);
 
         // send length header
         if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -173,7 +178,7 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // send actual packet
-        if (sendto(context->vpnSock, buf, nread,
+        if (sendto(context->vpnSock, data, ndata,
             0, (struct sockaddr *)&dest_ip, sizeof(dest_ip)) < 0)
         {
             printf("Error sending length header\n");
@@ -200,8 +205,10 @@ void* spawnTransmitterThread(void* arg)
 void recieverLoop(struct vpn_context * context)
 {
     ssize_t nread;
+    ssize_t ndata;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
+    char data[MAX_BUF_SIZE];
 	while(1) 
 	{
         recvfrom(context->vpnSock, &nread_net, sizeof(nread_net), 0, NULL, NULL);
@@ -212,8 +219,9 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
+        decryptData(buf, nread, data, &ndata);
 
-        write(context->interfaceFd, buf, nread);
+        write(context->interfaceFd, data, ndata);
     }
 }
 

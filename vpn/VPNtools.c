@@ -258,4 +258,20 @@ void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialC
         DieWithError("inet_pton failed");
     }
 
+    int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen)
+    {
+        // no encryption yet
+        memcpy(outputBuf, inputBuf, inputLen);
+        *outputLen = inputLen;
+        return 0;
+    }
+
+    int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen)
+    {
+        // no encryption yet
+        memcpy(outputBuf, inputBuf, inputLen);
+        *outputLen = inputLen;
+        return 0;
+    }
+
 }

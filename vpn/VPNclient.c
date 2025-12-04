@@ -64,8 +64,10 @@ int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
 void transmitterLoop(struct vpn_context * context)
 {
     ssize_t nread;
+    ssize_t ndata;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
+    char data[MAX_BUF_SIZE];
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
@@ -74,13 +76,14 @@ void transmitterLoop(struct vpn_context * context)
         printf("Tx %zd bytes \n", nread);
 
         // this is where encryption would go
+        encryptData(buf, nread, data, &ndata);
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
             0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
 
         // send actual packet
-        sendto(context->vpnSock, buf, nread,
+        sendto(context->vpnSock, data, ndata,
             0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
     }
 }
@@ -102,8 +105,10 @@ void* spawnTransmitterThread(void* arg)
 void recieverLoop(struct vpn_context * context)
 {
     ssize_t nread;
+    ssize_t ndata;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
+    char data[MAX_BUF_SIZE];
 	while(1) 
 	{
         recvfrom(context->vpnSock, &nread_net, sizeof(nread_net), 0, NULL, NULL);
@@ -114,8 +119,9 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
+        decryptData(buf, nread, data, &ndata);
 
-        write(context->interfaceFd, buf, nread);
+        write(context->interfaceFd, data, ndata);
     }
 }
 
