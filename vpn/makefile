@@ -1,13 +1,15 @@
 CFLAGS = -I/usr/include/libnl3
 LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3 -lpthread
 
-VPNclient.out: VPNclient.o VPNtools.o
+all: client server clean
+
+client: VPNclient.o VPNtools.o
 	gcc VPNclient.o VPNtools.o -o VPNclient.out $(LDFLAGS)
 
 VPNclient.o: VPNclient.c
 	gcc $(CFLAGS) -c VPNclient.c
 
-VPNserver.out: VPNserver.o VPNtools.o
+server: VPNserver.o VPNtools.o
 	gcc VPNserver.o VPNtools,o -o VPNserver.out $(LDFLAGS)
 
 VPNserver.o: VPNserver.c
@@ -15,3 +17,6 @@ VPNserver.o: VPNserver.c
 
 VPNtools.o: VPNtools.c
 	gcc $(CFLAGS) -c VPNtools.c
+
+clean:
+	rm -f *.o *.out

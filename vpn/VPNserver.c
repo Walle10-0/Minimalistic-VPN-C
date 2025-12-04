@@ -202,7 +202,7 @@ void setupVPNContext(struct vpn_context * context)
 	context->serverAddr.sin_port = htons(VPN_PORT);      /* Local port */
 
     // Convert string IP to binary
-    if (inet_pton(AF_INET, VPN_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
+    if (inet_pton(AF_INET, VPN_PUBLIC_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
     {
         DieWithError("inet_pton failed");
     }
