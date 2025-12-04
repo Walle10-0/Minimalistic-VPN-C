@@ -144,7 +144,9 @@ struct sockaddr_in * getRealIp(char * data)
     // the packet contained within the buffer
     struct iphdr *ip = (struct iphdr *)data;
 
-    uint32_t vpnDest = ntohl(ip->daddr);  // return traffic = dest is client
+    uint32_t vpnDest = ip->daddr;  // return traffic = dest is client
+
+    printf("IP-dest :: %d\n", (int)vpnDest);
 
     for (int i=0; i<MAX_VPN_CLIENTS; i++) {
         if (clientVpnIp[i] == vpnDest) {
@@ -238,9 +240,9 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
     //struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
-    uint32_t incomingClientVpnIp = ntohl(ip->saddr);
+    uint32_t incomingClientVpnIp = ip->saddr;
     //uint32_t incomingClientVpnIp = ip->saddr;
-    printf("IP :: %d\n", (int)incomingClientVpnIp);
+    printf("IP-src :: %d\n", (int)incomingClientVpnIp);
 
     for (int i = 0; i < MAX_VPN_CLIENTS; i++)
     {
