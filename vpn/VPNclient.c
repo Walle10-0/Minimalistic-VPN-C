@@ -100,7 +100,7 @@ void setupVPNContext(struct vpn_context * context)
     }
 
     // set up server address struct
-    if (autoSetServerAddress() <= 0)
+    if (autoSetServerAddress(context) <= 0)
     {
         DieWithError("inet_pton failed");
     }
