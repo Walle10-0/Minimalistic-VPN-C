@@ -10,7 +10,7 @@ VPNclient.o: VPNclient.c
 	gcc $(CFLAGS) -c VPNclient.c
 
 server: VPNserver.o VPNtools.o
-	gcc VPNserver.o VPNtools,o -o VPNserver.out $(LDFLAGS)
+	gcc VPNserver.o VPNtools.o -o VPNserver.out $(LDFLAGS)
 
 VPNserver.o: VPNserver.c
 	gcc $(CFLAGS) -c VPNserver.c
@@ -19,4 +19,7 @@ VPNtools.o: VPNtools.c
 	gcc $(CFLAGS) -c VPNtools.c
 
 clean:
+	rm -f *.o
+
+purge:
 	rm -f *.o *.out
