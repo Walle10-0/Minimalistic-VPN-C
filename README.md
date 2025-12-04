@@ -11,3 +11,15 @@ requires libnl3 to build
 sudo apt-get install libnl-3-dev libnl-genl-3-dev libnl-route-3-dev
 ```
 
+server requires iptables to run
+
+```bash
+whereis iptables
+```
+
+you can install it with
+
+```bash
+sudo apt update
+sudo apt install iptables
+```
