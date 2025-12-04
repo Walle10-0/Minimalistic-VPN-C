@@ -150,15 +150,15 @@ struct sockaddr_in * getRealIp(char * data)
     uint32_t incomingClientVpnIp = ip->daddr;
 
     int i = 0;
-    for (i < MAX_VPN_CLIENTS && result == NULL)
+    while (i < MAX_VPN_CLIENTS && result == NULL)
     {
         if (clientVpnIp[i] == incomingClientVpnIp)
         {
             result = &clientRealIp[i];
         }
-        i++
+        i++;
     }
-    printf("NotFound\n")
+    printf("NotFound\n");
     return result;
 }
 
@@ -248,7 +248,7 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
             return true;
         }
     }
-    printf("CacheFull\n")
+    printf("CacheFull\n");
     return false; // cache full
 }
 
@@ -261,13 +261,13 @@ void recieverLoop(struct vpn_context * context)
     char data[MAX_BUF_SIZE];
 
     struct sockaddr_in incomingClientRealIp;
-    socklen_t clientRealIpLen = sizeof(struct sockaddr_i);
+    socklen_t clientRealIpLen = sizeof(struct sockaddr_in);
 	while(1) 
 	{
         recvfrom(context->vpnSock, &nread_net, sizeof(nread_net), 0, NULL, NULL);
         nread = ntohs(nread_net);
 
-        recvfrom(context->vpnSock, buf, nread, 0, &incomingClientRealIp, &clientRealIpLen);
+        recvfrom(context->vpnSock, buf, nread, 0, (struct sockaddr *)&incomingClientRealIp, &clientRealIpLen);
 
         // print the length
         printf("Rx %zd bytes \n", nread);
