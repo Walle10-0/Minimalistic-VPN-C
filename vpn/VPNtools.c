@@ -1,4 +1,5 @@
 #include "VPNtools.h"
+// shared code between client and server
 
 #include <arpa/inet.h>
 #include <ctype.h>

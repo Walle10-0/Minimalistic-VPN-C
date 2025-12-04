@@ -31,11 +31,8 @@
 
 #include "VPNtools.h"
 
-char *getDefaultInterface()
+char *getDefaultInterface(nl_sock *sock)
 {
-    struct nl_sock *sock = nl_socket_alloc();
-    nl_connect(sock, NETLINK_ROUTE);
-
     struct rtnl_route *route;
     struct nl_cache *cache;
     struct rtnl_link *link;
@@ -51,14 +48,26 @@ char *getDefaultInterface()
     // e.g.,
     // default via 192.168.1.1 dev enp1s0 proto dhcp metric 100
 
-    nl_socket_free(sock);
     return ifName; // you would strdup() it
+}
+
+int enableIpForwarding()
+{
+    int fd = open("/proc/sys/net/ipv4/ip_forward", O_WRONLY);
+    int err = fd;
+    if (err >= 0)
+    {
+        err = write(fd, "1", 1)
+        close(fd);
+    }
+    return err;
 }
 
 int addServerRoutingRules(struct nl_sock *sock)
 {
     // enable forwarding and set up route
-    system("sysctl -w net.ipv4.ip_forward=1");
+    enableIpForwarding();
+    
     return 0;
 }
 

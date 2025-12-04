@@ -1,5 +1,6 @@
 #ifndef VPNTOOLS_H
 #define VPNTOOLS_H
+// shared code between client and server
 
 // libraries
 #include <netinet/in.h>
