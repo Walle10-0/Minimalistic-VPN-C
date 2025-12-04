@@ -141,10 +141,10 @@ void transmitterLoop(struct vpn_context * context)
     char buf[MAX_BUF_SIZE];
     struct sockaddr_in dest_ip;
 
-    //memset(&dest_ip, 0, sizeof(dest_ip));
-    //dest_ip.sin_family = AF_INET;           // IPv4
-    //dest_ip.sin_port = htons(VPN_PORT);   // very important
-    //inet_pton(AF_INET, VPN_CLIENT_IP, &dest_ip.sin_addr);
+    memset(&dest_ip, 0, sizeof(dest_ip));
+    dest_ip.sin_family = AF_INET;           // IPv4
+    dest_ip.sin_port = htons(VPN_PORT);   // very important
+    inet_pton(AF_INET, VPN_CLIENT_IP, &dest_ip.sin_addr);
 
 	while(1) 
 	{
@@ -155,10 +155,10 @@ void transmitterLoop(struct vpn_context * context)
         struct iphdr *ip = (struct iphdr *)buf;
 
         // extract destination IP address
-        memset(&dest_ip, 0, sizeof(dest_ip));
-        dest_ip.sin_family = AF_INET;           // IPv4
-        dest_ip.sin_port = htons(VPN_PORT);   // very important
-        dest_ip.sin_addr.s_addr = ip->daddr;
+        //memset(&dest_ip, 0, sizeof(dest_ip));
+        //dest_ip.sin_family = AF_INET;           // IPv4
+        //dest_ip.sin_port = htons(VPN_PORT);   // very important
+        //dest_ip.sin_addr.s_addr = ip->daddr;
 
         printf("Tx %zd bytes \n", nread);
 
