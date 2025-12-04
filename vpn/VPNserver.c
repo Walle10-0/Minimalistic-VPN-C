@@ -159,29 +159,6 @@ int createInterface(char *interfaceName)
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
 
-int setupSocket(unsigned short fileServPort)
-{
-	int servSockAddr;
-	struct sockaddr_in localServAddr; // Local address
-
-	/* Create socket for incoming connections */
-	// note SOCK_DGRAM for UDP not SOCK_STREAM for TCP
-	if ((servSockAddr = socket(PF_INET, SOCK_DGRAM, 0/*IPPROTO_UDP*/)) < 0)
-		DieWithError("socket() failed");
-  
-	/* Construct local address structure */
-	memset(&localServAddr, 0, sizeof(localServAddr));   /* Zero out structure */
-	localServAddr.sin_family = AF_INET;                /* Internet address family */
-	localServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-	localServAddr.sin_port = htons(fileServPort);      /* Local port */
-
-	/* Bind to the local address */
-	if (bind(servSockAddr, (struct sockaddr *) &localServAddr, sizeof(localServAddr)) < 0)
-		DieWithError("bind() failed");
-
-	return servSockAddr;
-}
-
 void setupVPNContext(struct vpn_context * context)
 {
     // zero it out

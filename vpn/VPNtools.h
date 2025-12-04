@@ -28,4 +28,6 @@ struct vpn_context {
 // I should use this more often ... or not
 void DieWithError(char *errorMessage);
 
+int setupSocket(unsigned short fileServPort);
+
 #endif

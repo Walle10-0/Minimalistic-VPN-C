@@ -31,6 +31,37 @@
 
 #include "VPNtools.h"
 
+int addRoutingRules(struct nl_sock *sock)
+{
+    int err = 0;
+    // re-route all traffic through the VPN
+    struct rtnl_route *route = rtnl_route_alloc();
+    struct nl_addr *dst, *gateway;
+
+    // default route
+    nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
+    rtnl_route_set_dst(route, dst);
+
+    // next-hop via your VPN server
+    err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &gateway); // VPN server IP
+    if (err < 0) 
+    {
+        DieWithError("Invalid IP\n");
+    }
+    else
+    {
+        struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
+        rtnl_route_nh_set_gateway(nh, gateway);
+        rtnl_route_add_nexthop(route, nh);
+
+        // Set metric (priority)
+        rtnl_route_set_priority(route, 0); // lower = preferred
+
+        rtnl_route_add(sock, route, 0);
+    }
+    return err;
+}
+
 // configure the TUN/TAP interface with Netlink
 int configureInterface(char * ifName)
 {
@@ -79,30 +110,9 @@ int configureInterface(char * ifName)
             else
             {
                 // re-route all traffic through the VPN
-                struct rtnl_route *route = rtnl_route_alloc();
-                struct nl_addr *dst, *gateway;
-
-                // default route
-                nl_addr_parse("0.0.0.0/0", AF_INET, &dst); // route everything
-                rtnl_route_set_dst(route, dst);
-
-                // next-hop via your VPN server
-                err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &gateway); // VPN server IP
-                if (err < 0) 
+                err = addRoutingRules(sock);
+                if (err >= 0) 
                 {
-                    fprintf(stderr, "Invalid IP\n");
-                }
-                else
-                {
-                    struct rtnl_nexthop *nh = rtnl_route_nh_alloc();
-                    rtnl_route_nh_set_gateway(nh, gateway);
-                    rtnl_route_add_nexthop(route, nh);
-
-                    // Set metric (priority)
-                    rtnl_route_set_priority(route, 0); // lower = preferred
-
-                    rtnl_route_add(sock, route, 0);
-
                     // cleanup
                     rtnl_addr_put(addr);
                     rtnl_link_put(link);
@@ -155,29 +165,6 @@ int createInterface(char *interfaceName)
 
 
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
-}
-
-int setupSocket(unsigned short fileServPort)
-{
-	int servSockAddr;
-	struct sockaddr_in localServAddr; // Local address
-
-	/* Create socket for incoming connections */
-	// note SOCK_DGRAM for UDP not SOCK_STREAM for TCP
-	if ((servSockAddr = socket(PF_INET, SOCK_DGRAM, 0/*IPPROTO_UDP*/)) < 0)
-		DieWithError("socket() failed");
-  
-	/* Construct local address structure */
-	memset(&localServAddr, 0, sizeof(localServAddr));   /* Zero out structure */
-	localServAddr.sin_family = AF_INET;                /* Internet address family */
-	localServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-	localServAddr.sin_port = htons(fileServPort);      /* Local port */
-
-	/* Bind to the local address */
-	if (bind(servSockAddr, (struct sockaddr *) &localServAddr, sizeof(localServAddr)) < 0)
-		DieWithError("bind() failed");
-
-	return servSockAddr;
 }
 
 void setupVPNContext(struct vpn_context * context)
