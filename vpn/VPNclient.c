@@ -31,7 +31,7 @@
 
 #include "VPNtools.h"
 
-int addClientRoutingRules(struct nl_sock *sock)
+int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
 {
     int err = 0;
     // re-route all traffic through the VPN

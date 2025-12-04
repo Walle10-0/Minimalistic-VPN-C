@@ -90,7 +90,7 @@ int activateInterface(struct nl_sock *sock, struct rtnl_link *link, char * ipAdd
 
     struct nl_addr *local;
 
-    err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &local); // VPN client IP
+    err = nl_addr_parse(ipAddr, AF_INET, &local); // VPN client IP
     if (err < 0)
     {
         fprintf(stderr, "Invalid IP\n");
@@ -107,8 +107,8 @@ int activateInterface(struct nl_sock *sock, struct rtnl_link *link, char * ipAdd
         else
         {
             // cleanup
-            rtnl_addr_put(addr);
-            rtnl_link_put(link);
+            rtnl_addr_put(addr); // deletes reference to addr marking it for deletion
+            rtnl_link_put(link); // deletes reference to addr marking it for deletion
         }
     }
 
@@ -143,11 +143,11 @@ bool createNetlinkSocket(struct nl_sock ** sock, struct rtnl_link **link, char *
 }
 
 // configure the TUN/TAP interface with Netlink
-int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
+int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
 {
     int err = 0;
     struct nl_sock *sock;
-    struct rtnl_link *link;
+    struct rtnl_link *link; // note future me: this gets deleted later so don't try to use it after activateInterface()
 
     createNetlinkSocket(&sock, &link, ifName);
 
@@ -161,7 +161,7 @@ int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)
         err = activateInterface(sock, link, ipAddr);
         if (err >= 0 && specialConfiguration != NULL)
         {
-            err = specialConfiguration(sock);
+            err = specialConfiguration(sock, ifName);
             if (err < 0)
             {
                 fprintf(stderr, "Error in special configuration\n");
@@ -174,7 +174,7 @@ int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)
 }
 
 // create TUN interface for VPN
-int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
+int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
 {
     int type = IFF_TUN; // we don't care about TAF interfaces
     int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
@@ -215,7 +215,7 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
 
-void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
+void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
 {
     // zero it out
     memset(context, 0, sizeof(context));

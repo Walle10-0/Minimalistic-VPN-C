@@ -36,6 +36,6 @@ int setServerAddress(struct vpn_context * context, char * serverIP, unsigned sho
 
 int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *));
 
-void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *));
+void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *));
 
 #endif

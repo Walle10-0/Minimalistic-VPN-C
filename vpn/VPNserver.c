@@ -31,7 +31,7 @@
 
 #include "VPNtools.h"
 
-char *getDefaultInterface(nl_sock *sock)
+char *getDefaultInterface(struct nl_sock *sock)
 {
     struct rtnl_route *route;
     struct nl_cache *cache;
@@ -57,18 +57,46 @@ int enableIpForwarding()
     int err = fd;
     if (err >= 0)
     {
-        err = write(fd, "1", 1)
+        err = write(fd, "1", 1);
         close(fd);
     }
     return err;
 }
 
+int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
+{
+    // set up route forwarding via default interface
+    char *defaultIfName = getDefaultInterface(sock); // this doesn't work rn lol
+
+    char cmd[256];
+    
+    //iptables -t nat -A POSTROUTING -o <out-if> -j MASQUERADE
+    snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -o %s-j MASQUERADE", defaultIfName);
+    system(cmd);
+
+    //iptables -A FORWARD -i vpnserver -o <out-if> -j ACCEPT
+    snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s -o %s -j ACCEPT", vpnIfName, defaultIfName);
+    system(cmd);
+
+    //iptables -A FORWARD -i <out-if> -o vpnserver -m state --state RELATED,ESTABLISHED -j ACCEPT
+    snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s-o %s -m state --state RELATED,ESTABLISHED -j ACCEPT", defaultIfName, vpnIfName);
+    system(cmd);
+}
+
 int addServerRoutingRules(struct nl_sock *sock)
 {
+    int err = 0;
+
     // enable forwarding and set up route
-    enableIpForwarding();
-    
-    return 0;
+    err = enableIpForwarding();
+
+    if (err >= 0)
+    {
+        // set up route forwarding via default interface
+        configureIpTablesRouting(sock);
+    }
+
+    return err;
 }
 
 void transmitterLoop(struct vpn_context * context)
