@@ -143,7 +143,9 @@ void transmitterLoop(struct vpn_context * context)
 
     memset(&dest_ip, 0, sizeof(dest_ip));
     dest_ip.sin_family = AF_INET;           // IPv4
+    dest_ip.sin_port = htons(VPN_PORT);   // very important
     inet_pton(AF_INET, "10.8.0.2", &dest_ip.sin_addr);
+
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
