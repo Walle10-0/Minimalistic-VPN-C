@@ -14,13 +14,15 @@
 #include <netlink/route/addr.h>
 #include <netlink/route/route.h>
 #include <netlink/route/addr.h>
+#include <netlink/cache.h>
 
-#include <net/if.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <netinet/ip.h>
 
 // system headers
 #include <sys/ioctl.h>
@@ -33,22 +35,42 @@
 
 char *getDefaultInterface(struct nl_sock *sock)
 {
-    struct rtnl_route *route;
-    struct nl_cache *cache;
-    struct rtnl_link *link;
-    char *ifName = NULL;
+    struct nl_cache *route_cache = NULL;
+    if (rtnl_route_alloc_cache(sock, AF_INET, 0, &route_cache) < 0) {
+        nl_socket_free(sock);
+        return NULL;
+    }
 
-    rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache);
+    struct nl_object *obj;
+    char *result = NULL;
 
-    // iterate all routes
-    rtnl_route_alloc(); // create route object
-    // better: use rtnl_route_get_default() if your libnl version supports it
+    // iterate over all routes
+    for (obj = nl_cache_get_first(route_cache);
+         obj != NULL;
+         obj = nl_cache_get_next(obj))
+    {
+        struct rtnl_route *route = (struct rtnl_route*)obj;
+        // For the default route, the destination (dst) should be NULL or 0.0.0.0/0
+        if (rtnl_route_get_family(route) == AF_INET &&
+            rtnl_route_get_dst(route) == NULL)
+        {
+            struct rtnl_nexthop *nh = rtnl_route_nexthop_n(route, 0);
+            if (!nh) continue;
+            int ifidx = rtnl_route_nh_get_ifindex(nh);
 
-    // simplified: you can run `ip route show default` via popen and parse the line
-    // e.g.,
-    // default via 192.168.1.1 dev enp1s0 proto dhcp metric 100
+            struct rtnl_link *link;
+            if (rtnl_link_get(sock, ifidx, &link) < 0) continue;
+            const char *name = rtnl_link_get_name(link);
+            if (name) {
+                result = strdup(name);
+            }
+            rtnl_link_put(link);
+            break;
+        }
+    }
 
-    return ifName; // you would strdup() it
+    nl_cache_free(route_cache);
+    return result;  // caller must free()
 }
 
 int enableIpForwarding()
@@ -104,10 +126,19 @@ void transmitterLoop(struct vpn_context * context)
     ssize_t nread;
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
+    struct sockaddr_in dest_ip;
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
         nread_net = htons((uint16_t)nread);
+
+        // the packet contained within the buffer
+        struct iphdr *ip = (struct iphdr *)buf;
+
+        // extract destination IP address
+        memset(&dest_ip, 0, sizeof(dest_ip));
+        dest_ip.sin_family = AF_INET;           // IPv4
+        dest_ip.sin_addr.s_addr = ip->daddr;
 
         printf("Tx %zd bytes \n", nread);
 
@@ -115,11 +146,12 @@ void transmitterLoop(struct vpn_context * context)
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
-            0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
+            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip));
 
         // send actual packet
         sendto(context->vpnSock, buf, nread,
-            0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
+            0, &dest_ip, sizeof(dest_ip));
+
     }
 }
 

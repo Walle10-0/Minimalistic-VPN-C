@@ -15,7 +15,6 @@
 #include <netlink/route/route.h>
 #include <netlink/route/addr.h>
 
-#include <net/if.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
