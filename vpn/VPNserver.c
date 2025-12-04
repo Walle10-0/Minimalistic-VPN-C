@@ -140,6 +140,10 @@ void transmitterLoop(struct vpn_context * context)
     uint16_t nread_net;
     char buf[MAX_BUF_SIZE];
     struct sockaddr_in dest_ip;
+
+    memset(&dest_ip, 0, sizeof(dest_ip));
+    dest_ip.sin_family = AF_INET;           // IPv4
+    inet_pton(AF_INET, "10.8.0.2", &dest_ip.sin_addr);
 	while(1) 
 	{
         nread = read(context->interfaceFd, buf, sizeof(buf));
@@ -149,9 +153,9 @@ void transmitterLoop(struct vpn_context * context)
         struct iphdr *ip = (struct iphdr *)buf;
 
         // extract destination IP address
-        memset(&dest_ip, 0, sizeof(dest_ip));
-        dest_ip.sin_family = AF_INET;           // IPv4
-        dest_ip.sin_addr.s_addr = ip->daddr;
+        //memset(&dest_ip, 0, sizeof(dest_ip));
+        //dest_ip.sin_family = AF_INET;           // IPv4
+        //dest_ip.sin_addr.s_addr = ip->daddr;
 
         printf("Tx %zd bytes \n", nread);
 
