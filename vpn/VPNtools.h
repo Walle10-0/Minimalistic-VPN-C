@@ -14,6 +14,7 @@
 #define VPN_PUBLIC_SERVER_IP "192.168.122.85"
 #define VPN_PORT 55555
 #define MAX_VPN_CLIENTS 20
+#define HARDCODED_KEY "1e27bbe48a548a9cd4ab0b86b04bb8c4220d3e179d45e07a90f3467e63d15b8c"
 
 // buffer constants
 #define MAX_BUF_SIZE 2000
@@ -41,8 +42,8 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
 void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *));
 
 // hook for later encryption and decryption
-int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen);
+int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen, char *key, char *iv);
 
-int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen);
+int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen, char *key, char *iv);
 
 #endif

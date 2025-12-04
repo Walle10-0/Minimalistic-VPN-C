@@ -1,5 +1,5 @@
 CFLAGS = -I/usr/include/libnl3
-LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3 -lpthread
+LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3 -lpthread -lcrypto
 
 all: client server clean
 

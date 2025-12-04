@@ -76,7 +76,7 @@ void transmitterLoop(struct vpn_context * context)
         printf("Tx %zd bytes \n", nread);
 
         // this is where encryption would go
-        encryptData(buf, nread, data, &ndata);
+        encryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -119,7 +119,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        decryptData(buf, nread, data, &ndata);
+        decryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
 
         write(context->interfaceFd, data, ndata);
     }

@@ -25,11 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+// crypto headers
+
+
 // system headers
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 
 // I should use this more often ... or not
 void DieWithError(char *errorMessage)
@@ -259,7 +263,7 @@ void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialC
     }
 }
 
-int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen)
+int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen, char *key, char *iv)
 {
     // no encryption yet
     memcpy(outputBuf, inputBuf, inputLen);
@@ -267,7 +271,7 @@ int encryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * o
     return 0;
 }
 
-int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen)
+int decryptData(char * inputBuf, ssize_t inputLen, char * outputBuf, ssize_t * outputLen, char *key, char *iv)
 {
     // no encryption yet
     memcpy(outputBuf, inputBuf, inputLen);

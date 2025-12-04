@@ -31,9 +31,8 @@
 #include <unistd.h>
 #include <pthread.h>  // for multi-threading
 
+// my libraries/code
 #include "VPNtools.h"
-
-#define HARDCODED_CLIENT_IP "192.168.122.155"
 
 uint32_t clientVpnIp[MAX_VPN_CLIENTS];
 struct sockaddr_in clientRealIp[MAX_VPN_CLIENTS];
@@ -184,7 +183,7 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // this is where encryption would go
-        encryptData(buf, nread, data, &ndata);
+        encryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
 
         // send length header
         if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -264,7 +263,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        decryptData(buf, nread, data, &ndata);
+        decryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
 
         cacheRealIp(incomingClientRealIp, data);
 
