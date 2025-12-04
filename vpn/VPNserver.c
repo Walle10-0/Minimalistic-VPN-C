@@ -147,7 +147,7 @@ struct sockaddr_in * getRealIp(char * data)
     struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
-    uint32_t incomingClientVpnIp = ip->daddr;
+    uint32_t incomingClientVpnIp = ip->saddr;
 
     int i = 0;
     while (i < MAX_VPN_CLIENTS && result == NULL)
