@@ -234,7 +234,8 @@ void* spawnTransmitterThread(void* arg)
 bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
 {
     // the packet contained within the buffer
-    struct iphdr *ip = (struct iphdr *)data;
+    struct iphdr *ip = (struct iphdr *)(buf + 4);
+    //struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
     uint32_t incomingClientVpnIp = ntohl(ip->saddr);
@@ -273,12 +274,10 @@ void recieverLoop(struct vpn_context * context)
         // print the length
         printf("Rx %zd bytes \n", nread);
 
-        cacheRealIp(incomingClientRealIp, buf);
-
         // this is where decryption would go
         decryptData(buf, nread, data, &ndata);
 
-
+        cacheRealIp(incomingClientRealIp, data);
 
         write(context->interfaceFd, data, ndata);
     }
