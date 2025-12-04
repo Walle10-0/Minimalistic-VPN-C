@@ -244,7 +244,7 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
         if (clientVpnIp[i] == 0 || clientVpnIp[i] == incomingClientVpnIp)
         {
             clientVpnIp[i] = incomingClientVpnIp;
-            clientRealIp[i] = *incomingClientRealIp;
+            clientRealIp[i] = incomingClientRealIp;
             return true;
         }
     }
