@@ -234,12 +234,13 @@ void* spawnTransmitterThread(void* arg)
 bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
 {
     // the packet contained within the buffer
-    struct iphdr *ip = (struct iphdr *)data;
+    struct iphdr *ip = (struct iphdr *)(data + 4);
+    //struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
     uint32_t incomingClientVpnIp = ntohl(ip->saddr);
     //uint32_t incomingClientVpnIp = ip->saddr;
-    printf("IP :: %s\n", (int)incomingClientVpnIp);
+    printf("IP :: %d\n", (int)incomingClientVpnIp);
 
     for (int i = 0; i < MAX_VPN_CLIENTS; i++)
     {
