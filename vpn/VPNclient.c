@@ -31,7 +31,7 @@
 
 #include "VPNtools.h"
 
-int addRoutingRules(struct nl_sock *sock)
+int addClientRoutingRules(struct nl_sock *sock)
 {
     int err = 0;
     // re-route all traffic through the VPN
@@ -72,7 +72,7 @@ void setupVPNContext(struct vpn_context * context)
     strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
 
     // create the interface and get a filedecriptor we can read and write to
-    context->interfaceFd = createInterface(interfaceName, VPN_CLIENT_IP, addRoutingRules);
+    context->interfaceFd = createInterface(interfaceName, VPN_CLIENT_IP, addClientRoutingRules);
 
     // check for error
     if (context->interfaceFd  > 0)
