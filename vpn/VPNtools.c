@@ -223,4 +223,3 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
 
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
-*/

@@ -3,6 +3,7 @@
 
 // libraries
 #include <netinet/in.h>
+#include <netlink/netlink.h>
 
 // VPN config constants
 #define TUNTAP_NAME "vpnclient"
