@@ -162,12 +162,20 @@ void transmitterLoop(struct vpn_context * context)
         // this is where encryption would go
 
         // send length header
-        sendto(context->vpnSock, &nread_net, sizeof(nread_net),
-            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip));
+        if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
+            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip)) < 0)
+        {
+            printf("Error sending length header\n");
+            continue;
+        }
 
         // send actual packet
-        sendto(context->vpnSock, buf, nread,
-            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip));
+        if (sendto(context->vpnSock, buf, nread,
+            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip)) < 0)
+        {
+            printf("Error sending length header\n");
+            continue;
+        }
 
     }
 }
