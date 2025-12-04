@@ -147,7 +147,7 @@ void main()
 {
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context, VPN_CLIENT_IP, addClientRoutingRules);
+    setupVPNContext(&context, VPN_CLIENT_IP, addServerRoutingRules);
 
     spawnThreads(&context);
 
