@@ -83,7 +83,7 @@ int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
     system(cmd);
 }
 
-int addServerRoutingRules(struct nl_sock *sock)
+int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
 {
     int err = 0;
 
@@ -93,7 +93,7 @@ int addServerRoutingRules(struct nl_sock *sock)
     if (err >= 0)
     {
         // set up route forwarding via default interface
-        configureIpTablesRouting(sock);
+        configureIpTablesRouting(sock, vpnIfName);
     }
 
     return err;
