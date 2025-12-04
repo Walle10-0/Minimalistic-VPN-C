@@ -7,7 +7,7 @@
 #include <netlink/netlink.h>
 
 // VPN config constants
-#define TUNTAP_NAME "vpnclient"
+#define TUNTAP_NAME "vpnlink0"
 #define VPN_CLIENT_IP "10.8.0.2/24"
 #define VPN_PRIVATE_SERVER_IP "10.8.0.1/24"
 #define VPN_PUBLIC_SERVER_IP "192.168.122.85"
