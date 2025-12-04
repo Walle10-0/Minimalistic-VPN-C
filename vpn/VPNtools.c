@@ -68,12 +68,7 @@ int setServerAddress(struct vpn_context * context, char * serverIP, unsigned sho
     context->serverAddr.sin_port = htons(serverPort);      /* Local port */
 
     // Convert string IP to binary
-    if (inet_pton(AF_INET, serverIP, &context->serverAddr.sin_addr) <= 0)
-    {
-        return -1;
-    }
-
-    return 0;
+    return inet_pton(AF_INET, serverIP, &context->serverAddr.sin_addr);
 }
 
 // configure the TUN/TAP interface to be active with Netlink
