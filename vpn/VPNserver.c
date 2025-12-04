@@ -141,30 +141,19 @@ int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
 
 struct sockaddr_in * getRealIp(char * data)
 {
-    struct sockaddr_in * result = NULL;
-
     // the packet contained within the buffer
     struct iphdr *ip = (struct iphdr *)data;
 
-    // fill in VPN IP
-    uint32_t incomingClientVpnIp = ip->daddr;
+    uint32_t vpnDest = ntohl(ip->daddr);  // return traffic = dest is client
 
-    int i = 0;
-    while (i < MAX_VPN_CLIENTS && result == NULL)
-    {
-        if (clientVpnIp[i] == incomingClientVpnIp)
-        {
-            printf("gottem");
-            result = &clientRealIp[i];
+    for (int i=0; i<MAX_VPN_CLIENTS; i++) {
+        if (clientVpnIp[i] == vpnDest) {
+            printf("gottem\n");
+            return &clientRealIp[i];
         }
-        i++;
     }
-    if (result == NULL)
-    {
-        printf("NotFound\n");
-    }
-
-    return result;
+    printf("NotFound\n");
+    return NULL;
 }
 
 void transmitterLoop(struct vpn_context * context)
@@ -248,7 +237,8 @@ bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
     struct iphdr *ip = (struct iphdr *)data;
 
     // fill in VPN IP
-    uint32_t incomingClientVpnIp = ip->saddr;
+    uint32_t incomingClientVpnIp = ntohl(ip->saddr);
+    //uint32_t incomingClientVpnIp = ip->saddr;
 
     for (int i = 0; i < MAX_VPN_CLIENTS; i++)
     {
