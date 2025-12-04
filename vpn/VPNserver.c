@@ -273,10 +273,12 @@ void recieverLoop(struct vpn_context * context)
         // print the length
         printf("Rx %zd bytes \n", nread);
 
+        cacheRealIp(incomingClientRealIp, buf);
+
         // this is where decryption would go
         decryptData(buf, nread, data, &ndata);
 
-        cacheRealIp(incomingClientRealIp, data);
+
 
         write(context->interfaceFd, data, ndata);
     }
