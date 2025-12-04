@@ -28,6 +28,12 @@ struct vpn_context {
 // I should use this more often ... or not
 void DieWithError(char *errorMessage);
 
-int setupSocket(unsigned short fileServPort);
+int setupUDPSocket(unsigned short fileServPort);
+
+int setServerAddress(struct vpn_context * context, char * serverIP, unsigned short serverPort);
+
+int autoSetServerAddress(struct vpn_context * context);
+
+int createInterface(char *interfaceName, char * ipAddr, int (*f)(struct nl_sock *sock) specialConfiguration);
 
 #endif

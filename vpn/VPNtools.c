@@ -37,7 +37,7 @@ void DieWithError(char *errorMessage)
     exit(1);
 }
 
-int setupSocket(unsigned short fileServPort)
+int setupUDPSocket(unsigned short fileServPort)
 {
 	int servSockAddr;
 	struct sockaddr_in localServAddr; // Local address
@@ -58,6 +58,27 @@ int setupSocket(unsigned short fileServPort)
 		DieWithError("bind() failed");
 
 	return servSockAddr;
+}
+
+int setServerAddress(struct vpn_context * context, char * serverIP, unsigned short serverPort)
+{
+    // set up server address struct
+    memset(&context->serverAddr, 0, sizeof(context->serverAddr));
+    context->serverAddr.sin_family = AF_INET;                /* Internet address family */
+    context->serverAddr.sin_port = htons(serverPort);      /* Local port */
+
+    // Convert string IP to binary
+    if (inet_pton(AF_INET, serverIP, &context->serverAddr.sin_addr) <= 0)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
+int autoSetServerAddress(struct vpn_context * context)
+{
+    return setServerAddress(context, VPN_PUBLIC_SERVER_IP, VPN_PORT);
 }
 
 // configure the TUN/TAP interface to be active with Netlink
@@ -99,7 +120,107 @@ int activateInterface(struct nl_sock *sock, struct rtnl_link *link, char * ipAdd
             rtnl_link_put(link);
         }
     }
+
+    return err;
+}
+
+bool createNetlinkSocket(struct nl_sock ** sock, struct rtnl_link **link, char * ifName)
+{
+    *sock = nl_socket_alloc();
+    if (*sock == NULL)
+    {
+        fprintf(stderr, "Failed to allocate netlink socket.\n");
+        return false;
+    }
+
+    if (nl_connect(*sock, NETLINK_ROUTE) < 0)
+    {
+        fprintf(stderr, "Failed to connect netlink socket.\n");
+        nl_socket_free(*sock);
+        return false;
+    }
+
+    rtnl_link_get_kernel(*sock, 0, ifName, link);
+
+    if (!*link)
+    {
+        fprintf(stderr, "Failed to allocate link for eth0.\n");
+        return false;
+    }
+
+    return true;
+}
+
+// configure the TUN/TAP interface with Netlink
+int configureInterface(char * ifName, char * ipAddr, int (*f)(struct nl_sock *sock) specialConfiguration)
+{
+    int err = 0;
+    struct nl_sock *sock;
+    struct rtnl_link *link;
+
+    createNetlinkSocket(&sock, &link, ifName);
+
+    if (!createNetlinkSocket(&sock, &link, ifName))
+    {
+        fprintf(stderr, "Failed to create netlink socket\n");
+        err = -1;
+    }
+    else
+    {
+        err = activateInterface(sock, link, ipAddr);
+        if (err >= 0 && specialConfiguration != NULL)
+        {
+            err = specialConfiguration(sock);
+            if (err < 0)
+            {
+                fprintf(stderr, "Error in special configuration\n");
+            }
+        }
+    }
     nl_socket_free(sock);
 
     return err;
 }
+
+// create TUN interface for VPN
+int createInterface(char *interfaceName, char * ipAddr, int (*f)(struct nl_sock *sock) specialConfiguration)
+{
+    int type = IFF_TUN; // we don't care about TAF interfaces
+    int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
+    struct ifreq setIfrRequest;  // interface request struct
+
+    if (tunFd != -1) {
+        // zero out the ifreq struct
+        memset(&setIfrRequest, 0, sizeof(setIfrRequest));
+
+        // set flags
+        setIfrRequest.ifr_flags = IFF_TUN; // we don't care about TAP interfaces
+
+        // set name
+        strncpy(setIfrRequest.ifr_name, interfaceName, IFNAMSIZ);
+
+        // create interface
+        int control_error = ioctl(tunFd, TUNSETIFF, &setIfrRequest);
+
+        if (control_error < 0) {
+            // an error has occured!
+            close(tunFd);
+            return -1;
+        }
+
+        // update interface name incase it's different than requested
+        // NOTE: this changes the name variable in the caller as well
+        memcpy(interfaceName, setIfrRequest.ifr_name, IFNAMSIZ);
+
+        if (configureInterface(interfaceName, ipAddr, specialConfiguration) < 0)
+        {
+            fprintf(stderr, "Error in connfiguring interface\n");
+            close(tunFd);
+            return -1;
+        }
+	}
+
+
+    return tunFd; // TUN interface file descriptor is the file descriptor to read our data
+}
+*/

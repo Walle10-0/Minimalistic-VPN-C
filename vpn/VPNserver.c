@@ -183,7 +183,7 @@ void setupVPNContext(struct vpn_context * context)
     }
     
     // setup VPN socket
-    context->vpnSock = setupSocket(VPN_PORT); // hardcoded port for now
+    context->vpnSock = setupUDPSocket(VPN_PORT); // hardcoded port for now
 
     // check for error
     if (context->vpnSock  > 0)
@@ -197,12 +197,7 @@ void setupVPNContext(struct vpn_context * context)
     }
 
     // set up server address struct
-    memset(&context->serverAddr, 0, sizeof(context->serverAddr));
-    context->serverAddr.sin_family = AF_INET;                /* Internet address family */
-	context->serverAddr.sin_port = htons(VPN_PORT);      /* Local port */
-
-    // Convert string IP to binary
-    if (inet_pton(AF_INET, VPN_PUBLIC_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
+    if (autoSetServerAddress() <= 0)
     {
         DieWithError("inet_pton failed");
     }

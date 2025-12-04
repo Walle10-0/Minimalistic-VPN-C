@@ -62,111 +62,6 @@ int addRoutingRules(struct nl_sock *sock)
     return err;
 }
 
-// configure the TUN/TAP interface with Netlink
-int configureInterface(char * ifName)
-{
-    int err = 0;
-    struct nl_sock *sock = nl_socket_alloc();
-    nl_connect(sock, NETLINK_ROUTE);
-
-
-    struct rtnl_link *link;
-    rtnl_link_get_kernel(sock, 0, ifName, &link);
-
-    if (!link)
-    {
-        fprintf(stderr, "Failed to allocate link for eth0.\n");
-        err = -1;
-    }
-    else
-    {
-        // bring up interface
-        unsigned int flags = rtnl_link_get_flags(link);
-        flags |= IFF_UP;
-        rtnl_link_set_flags(link, flags);
-
-        // apply changes to existing interface
-        rtnl_link_change(sock, link, link, 0);
-        
-        // add an IPv4 address
-        struct rtnl_addr *addr = rtnl_addr_alloc();
-
-        struct nl_addr *local;
-
-        err = nl_addr_parse(VPN_CLIENT_IP, AF_INET, &local); // VPN client IP
-        if (err < 0)
-        {
-            fprintf(stderr, "Invalid IP\n");
-        }
-        else
-        {
-            rtnl_addr_set_local(addr, local);
-            rtnl_addr_set_link(addr, link);
-        
-            err = rtnl_addr_add(sock, addr, 0);
-            if (err < 0) {
-                fprintf(stderr, "Failed to add address: %s\n", nl_geterror(err));
-            }
-            else
-            {
-                // re-route all traffic through the VPN
-                err = addRoutingRules(sock);
-                if (err >= 0) 
-                {
-                    // cleanup
-                    rtnl_addr_put(addr);
-                    rtnl_link_put(link);
-                }
-            }
-        }
-    }
-    nl_socket_free(sock);
-
-    return err;
-}
-
-// create TUN interface for VPN client
-int createInterface(char *interfaceName)
-{
-    int type = IFF_TUN; // we don't care about TAF interfaces
-    int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
-    struct ifreq setIfrRequest;  // interface request struct
-
-    if (tunFd != -1) {
-        // zero out the ifreq struct
-        memset(&setIfrRequest, 0, sizeof(setIfrRequest));
-
-        // set flags
-        setIfrRequest.ifr_flags = IFF_TUN; // we don't care about TAP interfaces
-
-        // set name
-        strncpy(setIfrRequest.ifr_name, interfaceName, IFNAMSIZ);
-
-        // create interface
-        int control_error = ioctl(tunFd, TUNSETIFF, &setIfrRequest);
-
-        if (control_error < 0) {
-            // an error has occured!
-            close(tunFd);
-            return -1;
-        }
-
-        // update interface name incase it's different than requested
-        // NOTE: this changes the name variable in the caller as well
-        memcpy(interfaceName, setIfrRequest.ifr_name, IFNAMSIZ);
-
-        if (configureInterface(interfaceName) < 0)
-        {
-            fprintf(stderr, "Error in connfiguring interface\n");
-            close(tunFd);
-            return -1;
-        }
-	}
-
-
-    return tunFd; // TUN interface file descriptor is the file descriptor to read our data
-}
-
 void setupVPNContext(struct vpn_context * context)
 {
     // zero it out
@@ -177,7 +72,7 @@ void setupVPNContext(struct vpn_context * context)
     strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
 
     // create the interface and get a filedecriptor we can read and write to
-    context->interfaceFd = createInterface(interfaceName);
+    context->interfaceFd = createInterface(interfaceName, VPN_CLIENT_IP, addRoutingRules);
 
     // check for error
     if (context->interfaceFd  > 0)
@@ -191,7 +86,7 @@ void setupVPNContext(struct vpn_context * context)
     }
     
     // setup VPN socket
-    context->vpnSock = setupSocket(VPN_PORT); // hardcoded port for now
+    context->vpnSock = setupUDPSocket(VPN_PORT); // hardcoded port for now
 
     // check for error
     if (context->vpnSock  > 0)
@@ -205,12 +100,7 @@ void setupVPNContext(struct vpn_context * context)
     }
 
     // set up server address struct
-    memset(&context->serverAddr, 0, sizeof(context->serverAddr));
-    context->serverAddr.sin_family = AF_INET;                /* Internet address family */
-	context->serverAddr.sin_port = htons(VPN_PORT);      /* Local port */
-
-    // Convert string IP to binary
-    if (inet_pton(AF_INET, VPN_PUBLIC_SERVER_IP, &context->serverAddr.sin_addr) <= 0)
+    if (autoSetServerAddress() <= 0)
     {
         DieWithError("inet_pton failed");
     }
