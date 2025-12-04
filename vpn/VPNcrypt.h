@@ -2,6 +2,8 @@
 #define VPNCRYPT_H
 // shared code between client and server
 
+#include <sys/types.h>
+
 // VPN config constants
 #define HARDCODED_KEY "1e27bbe48a548a9cd4ab0b86b04bb8c4220d3e179d45e07a90f3467e63d15b8c"
 
