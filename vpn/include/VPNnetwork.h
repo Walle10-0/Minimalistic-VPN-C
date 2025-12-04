@@ -30,6 +30,7 @@ struct vpn_context {
 // function prototypes
 
 int setupUDPSocket(unsigned short fileServPort);
+int setupTCPSocket(unsigned short fileServPort);
 
 int setServerAddress(struct vpn_context * context, char * serverIP, unsigned short serverPort);
 

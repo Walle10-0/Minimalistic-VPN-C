@@ -60,6 +60,31 @@ int setupUDPSocket(unsigned short fileServPort)
 	return servSockAddr;
 }
 
+int setupTCPSocket(unsigned short fileServPort)
+{
+	int servSockAddr;
+	struct sockaddr_in localServAddr; // Local address
+
+	/* Create socket for incoming connections */
+	if ((servSockAddr = socket(SOCK_STREAM, SOCK_DGRAM, 0/*IPPROTO_UDP*/)) < 0)
+		DieWithError("socket() failed");
+  
+	/* Construct local address structure */
+	memset(&localServAddr, 0, sizeof(localServAddr));   /* Zero out structure */
+	localServAddr.sin_family = AF_INET;                /* Internet address family */
+	localServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
+	localServAddr.sin_port = htons(fileServPort);      /* Local port */
+
+	/* Bind to the local address */
+	if (bind(servSockAddr, (struct sockaddr *) &localServAddr, sizeof(localServAddr)) < 0)
+		DieWithError("bind() failed");
+
+	/* Mark the socket so it will listen for incoming connections */
+	if (listen(servSockAddr, MAXPENDING) < 0)
+		DieWithError("listen() failed");
+	return servSockAddr;
+}
+
 int setServerAddress(struct vpn_context * context, char * serverIP, unsigned short serverPort)
 {
     // set up server address struct
