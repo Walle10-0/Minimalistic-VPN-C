@@ -34,6 +34,6 @@ int setServerAddress(struct vpn_context * context, char * serverIP, unsigned sho
 
 int autoSetServerAddress(struct vpn_context * context);
 
-int createInterface(char *interfaceName, char * ipAddr, int (*f)(struct nl_sock *) specialConfiguration);
+int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *));
 
 #endif

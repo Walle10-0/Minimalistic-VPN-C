@@ -152,7 +152,7 @@ bool createNetlinkSocket(struct nl_sock ** sock, struct rtnl_link **link, char *
 }
 
 // configure the TUN/TAP interface with Netlink
-int configureInterface(char * ifName, char * ipAddr, int (*f)(struct nl_sock *) specialConfiguration)
+int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
 {
     int err = 0;
     struct nl_sock *sock;
@@ -183,7 +183,7 @@ int configureInterface(char * ifName, char * ipAddr, int (*f)(struct nl_sock *) 
 }
 
 // create TUN interface for VPN
-int createInterface(char *interfaceName, char * ipAddr, int (*f)(struct nl_sock *) specialConfiguration)
+int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
 {
     int type = IFF_TUN; // we don't care about TAF interfaces
     int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
