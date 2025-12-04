@@ -154,7 +154,7 @@ struct sockaddr_in * getRealIp(char * data)
     {
         if (clientVpnIp[i] == incomingClientVpnIp)
         {
-            print("gottem");
+            printf("gottem");
             result = &clientRealIp[i];
         }
         i++;
@@ -205,7 +205,7 @@ void transmitterLoop(struct vpn_context * context)
             printf("Skipping packet, no cached real IP\n");
             continue;
         }
-        
+
         // this is where encryption would go
         encryptData(buf, nread, data, &ndata);
 
