@@ -50,9 +50,10 @@ char *getDefaultInterface(struct nl_sock *sock)
          obj = nl_cache_get_next(obj))
     {
         struct rtnl_route *route = (struct rtnl_route*)obj;
+        struct nl_addr *dst = rtnl_route_get_dst(route);
         // For the default route, the destination (dst) should be NULL or 0.0.0.0/0
         if (rtnl_route_get_family(route) == AF_INET &&
-            rtnl_route_get_dst(route) == NULL)
+            (!dst || nl_addr_get_prefixlen(dst) == 0))
         {
             struct rtnl_nexthop *nh = rtnl_route_nexthop_n(route, 0);
             if (!nh) continue;
