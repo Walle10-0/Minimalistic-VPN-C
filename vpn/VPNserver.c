@@ -58,13 +58,11 @@ char *getDefaultInterface(struct nl_sock *sock)
             if (!nh) continue;
             int ifidx = rtnl_route_nh_get_ifindex(nh);
 
-            struct rtnl_link *link;
-            if (rtnl_link_get(sock, ifidx, &link) < 0) continue;
-            const char *name = rtnl_link_get_name(link);
-            if (name) {
-                result = strdup(name);
+            char ifName[IFNAMSIZ];
+            if (if_indextoname(ifidx, ifName)) {
+                result = strdup(ifName);  // allocate copy for caller
+                // NOTE: caller must free() later on
             }
-            rtnl_link_put(link);
             break;
         }
     }
@@ -90,19 +88,30 @@ int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
     // set up route forwarding via default interface
     char *defaultIfName = getDefaultInterface(sock); // this doesn't work rn lol
 
-    char cmd[256];
+    if (!defaultIfName)
+    {
+        DieWithError("Could not get default interface name\n");
+    }
+    else
+    {
+        printf("Default interface is %s\n", defaultIfName);
+
+        char cmd[256];
     
-    //iptables -t nat -A POSTROUTING -o <out-if> -j MASQUERADE
-    snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -o %s-j MASQUERADE", defaultIfName);
-    system(cmd);
+        //iptables -t nat -A POSTROUTING -o <out-if> -j MASQUERADE
+        snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -o %s-j MASQUERADE", defaultIfName);
+        system(cmd);
 
-    //iptables -A FORWARD -i vpnserver -o <out-if> -j ACCEPT
-    snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s -o %s -j ACCEPT", vpnIfName, defaultIfName);
-    system(cmd);
+        //iptables -A FORWARD -i vpnserver -o <out-if> -j ACCEPT
+        snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s -o %s -j ACCEPT", vpnIfName, defaultIfName);
+        system(cmd);
 
-    //iptables -A FORWARD -i <out-if> -o vpnserver -m state --state RELATED,ESTABLISHED -j ACCEPT
-    snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s-o %s -m state --state RELATED,ESTABLISHED -j ACCEPT", defaultIfName, vpnIfName);
-    system(cmd);
+        //iptables -A FORWARD -i <out-if> -o vpnserver -m state --state RELATED,ESTABLISHED -j ACCEPT
+        snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s-o %s -m state --state RELATED,ESTABLISHED -j ACCEPT", defaultIfName, vpnIfName);
+        system(cmd);
+
+        free(defaultIfName);
+    }
 }
 
 int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
