@@ -159,7 +159,7 @@ void transmitterLoop(struct vpn_context * context)
 
         // send actual packet
         sendto(context->vpnSock, buf, nread,
-            0, &dest_ip, sizeof(dest_ip));
+            0, (struct sockaddr *)&dest_ip, sizeof(dest_ip));
 
     }
 }
