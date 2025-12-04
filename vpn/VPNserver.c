@@ -62,51 +62,6 @@ int addServerRoutingRules(struct nl_sock *sock)
     return 0;
 }
 
-void setupVPNContext(struct vpn_context * context)
-{
-    // zero it out
-    memset(context, 0, sizeof(context));
-
-    // interface name
-    char interfaceName[IFNAMSIZ];
-    strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
-
-    // create the interface and get a filedecriptor we can read and write to
-    context->interfaceFd = createInterface(interfaceName, VPN_PRIVATE_SERVER_IP, addServerRoutingRules);
-
-    // check for error
-    if (context->interfaceFd  > 0)
-    {
-        printf("TUN/TAP interface %s created successfully with name %s!\n", TUNTAP_NAME, interfaceName);
-    }
-    else
-    {
-        printf("Error creating TUN/TAP interface %s\n", TUNTAP_NAME);
-        DieWithError("Are you root?\n");
-    }
-    
-    // setup VPN socket
-    context->vpnSock = setupUDPSocket(VPN_PORT); // hardcoded port for now
-
-    // check for error
-    if (context->vpnSock  > 0)
-    {
-        printf("VPN socket created successfully!\n");
-    }
-    else
-    {
-        close(context->interfaceFd);
-        DieWithError("Error creating VPN socket\n");
-    }
-
-    // set up server address struct
-    if (autoSetServerAddress() <= 0)
-    {
-        DieWithError("inet_pton failed");
-    }
-
-}
-
 void transmitterLoop(struct vpn_context * context)
 {
     ssize_t nread;
@@ -192,7 +147,7 @@ void main()
 {
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context);
+    setupVPNContext(&context, VPN_CLIENT_IP, addClientRoutingRules);
 
     spawnThreads(&context);
 

@@ -76,11 +76,6 @@ int setServerAddress(struct vpn_context * context, char * serverIP, unsigned sho
     return 0;
 }
 
-int autoSetServerAddress(struct vpn_context * context)
-{
-    return setServerAddress(context, VPN_PUBLIC_SERVER_IP, VPN_PORT);
-}
-
 // configure the TUN/TAP interface to be active with Netlink
 int activateInterface(struct nl_sock *sock, struct rtnl_link *link, char * ipAddr)
 {
@@ -222,4 +217,49 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
 
 
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
+}
+
+void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *))
+{
+    // zero it out
+    memset(context, 0, sizeof(context));
+
+    // interface name
+    char interfaceName[IFNAMSIZ];
+    strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
+
+    // create the interface and get a filedecriptor we can read and write to
+    context->interfaceFd = createInterface(interfaceName, ipAddr, specialConfiguration);
+
+    // check for error
+    if (context->interfaceFd  > 0)
+    {
+        printf("TUN/TAP interface %s created successfully with name %s!\n", TUNTAP_NAME, interfaceName);
+    }
+    else
+    {
+        printf("Error creating TUN/TAP interface %s\n", TUNTAP_NAME);
+        DieWithError("Are you root?\n");
+    }
+    
+    // setup VPN socket
+    context->vpnSock = setupUDPSocket(VPN_PORT); // hardcoded port for now
+
+    // check for error
+    if (context->vpnSock  > 0)
+    {
+        printf("VPN socket created successfully!\n");
+    }
+    else
+    {
+        close(context->interfaceFd);
+        DieWithError("Error creating VPN socket\n");
+    }
+
+    // set up server address struct
+    if (setServerAddress(context, VPN_PUBLIC_SERVER_IP, VPN_PORT) <= 0)
+    {
+        DieWithError("inet_pton failed");
+    }
+
 }
