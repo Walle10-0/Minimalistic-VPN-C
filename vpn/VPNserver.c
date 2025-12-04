@@ -100,7 +100,7 @@ int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
         char cmd[256];
     
         //iptables -t nat -A POSTROUTING -o <out-if> -j MASQUERADE
-        snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -o %s-j MASQUERADE", defaultIfName);
+        snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", VPN_NETWORK, defaultIfName);
         system(cmd);
 
         //iptables -A FORWARD -i vpnserver -o <out-if> -j ACCEPT
@@ -108,8 +108,11 @@ int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
         system(cmd);
 
         //iptables -A FORWARD -i <out-if> -o vpnserver -m state --state RELATED,ESTABLISHED -j ACCEPT
-        snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s-o %s -m state --state RELATED,ESTABLISHED -j ACCEPT", defaultIfName, vpnIfName);
+        snprintf(cmd, sizeof(cmd), "iptables -A FORWARD -i %s -o %s -m state --state RELATED,ESTABLISHED -j ACCEPT", defaultIfName, vpnIfName);
         system(cmd);
+
+        // where does this go?
+        //iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o enp1s0 -j MASQUERADE
 
         free(defaultIfName);
     }
