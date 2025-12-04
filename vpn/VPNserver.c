@@ -34,6 +34,8 @@
 // my libraries/code
 #include "VPNtools.h"
 
+#define TUN_OFFSET 4  // size of length header
+
 uint32_t clientVpnIp[MAX_VPN_CLIENTS];
 struct sockaddr_in clientRealIp[MAX_VPN_CLIENTS];
 
@@ -141,7 +143,7 @@ int addServerRoutingRules(struct nl_sock *sock, char *vpnIfName)
 struct sockaddr_in * getRealIp(char * data)
 {
     // the packet contained within the buffer
-    struct iphdr *ip = (struct iphdr *)data;
+    struct iphdr *ip = (struct iphdr *)(data + TUN_OFFSET);
 
     uint32_t vpnDest = ip->daddr;  // return traffic = dest is client
 
@@ -220,12 +222,10 @@ void* spawnTransmitterThread(void* arg)
 bool cacheRealIp(struct sockaddr_in incomingClientRealIp, char * data)
 {
     // the packet contained within the buffer
-    struct iphdr *ip = (struct iphdr *)(data + 4);
-    //struct iphdr *ip = (struct iphdr *)data;
+    struct iphdr *ip = (struct iphdr *)(data + TUN_OFFSET);
 
     // fill in VPN IP
-    uint32_t incomingClientVpnIp = ip->daddr;
-    //uint32_t incomingClientVpnIp = ip->saddr;
+    uint32_t incomingClientVpnIp = ip->saddr;
     //printf("IP-src :: %d\n", (int)incomingClientVpnIp);
 
     for (int i = 0; i < MAX_VPN_CLIENTS; i++)
