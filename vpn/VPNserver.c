@@ -33,7 +33,10 @@
 
 // my libraries/code
 #include "VPNtools.h"
+#include "VPNcrypt.h"
+#include "VPNnetwork.h"
 
+// this TUN_OFFSET is PURE EVIL
 #define TUN_OFFSET 4  // size of length header
 
 uint32_t clientVpnIp[MAX_VPN_CLIENTS];

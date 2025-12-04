@@ -28,7 +28,10 @@
 #include <unistd.h>
 #include <pthread.h>  // for multi-threading
 
+// my libraries/code
 #include "VPNtools.h"
+#include "VPNcrypt.h"
+#include "VPNnetwork.h"
 
 int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
 {
