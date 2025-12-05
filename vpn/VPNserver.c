@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
 
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context, config.vpnPrivateServerIp, addServerRoutingRules);
+    setupVPNContext(&context, config.vpnPrivateServerIp, &config, addServerRoutingRules);
 
     memset(clientVpnIp, 0, sizeof(clientVpnIp)); // initialize
     memset(clientRealIp, 0, sizeof(clientRealIp)); // initialize

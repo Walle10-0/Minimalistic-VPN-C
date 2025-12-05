@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context, config.vpnClientIp, addClientRoutingRules);
+    setupVPNContext(&context, config.vpnClientIp, &config, addClientRoutingRules);
 
     spawnThreads(&context);
 
