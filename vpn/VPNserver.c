@@ -43,6 +43,8 @@
 uint32_t clientVpnIp[MAX_VPN_CLIENTS];
 struct sockaddr_in clientRealIp[MAX_VPN_CLIENTS];
 
+unsigned char * key = NULL;
+
 char *getDefaultInterface(struct nl_sock *sock)
 {
     struct nl_cache *route_cache = NULL;
@@ -189,7 +191,7 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // this is where encryption would go
-        encryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
+        encryptData(buf, nread, data, &ndata, key, NULL);
 
         // send length header
         if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -267,7 +269,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        decryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
+        decryptData(buf, nread, data, &ndata, key, NULL);
 
         cacheRealIp(incomingClientRealIp, data);
 
@@ -301,6 +303,8 @@ void spawnThreads(struct vpn_context * context)
 int main(int argc, char *argv[])
 {
     struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
+
+    key = config.hardcodedKey;
 
     // create shared context object
     struct vpn_context context;

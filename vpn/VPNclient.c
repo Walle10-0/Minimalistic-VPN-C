@@ -34,6 +34,8 @@
 #include "VPNnetwork.h"
 #include "VPNconfig.h"
 
+unsigned char * key = NULL;
+
 int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName, struct vpn_config * config)
 {
     int err = 0;
@@ -80,7 +82,7 @@ void transmitterLoop(struct vpn_context * context)
         printf("Tx %zd bytes \n", nread);
 
         // this is where encryption would go
-        encryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
+        encryptData(buf, nread, data, &ndata, key, NULL);
 
         // send length header
         sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -123,7 +125,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        decryptData(buf, nread, data, &ndata, HARDCODED_KEY, NULL);
+        decryptData(buf, nread, data, &ndata, key, NULL);
 
         write(context->interfaceFd, data, ndata);
     }
@@ -155,6 +157,8 @@ void spawnThreads(struct vpn_context * context)
 int main(int argc, char *argv[])
 {
     struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
+
+    key = config.hardcodedKey;
 
     // create shared context object
     struct vpn_context context;

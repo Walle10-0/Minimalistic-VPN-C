@@ -59,6 +59,13 @@ int parseConfigLine(char * line, struct vpn_config * config)
     {
         result = 1;
     }
+    else if (sscanf(line, " hardcodedKey = %s", buffer) == 1)
+    {
+        // allocate memory for the key
+        size_t keyLen = strlen(buffer);
+        config->hardcodedKey = (unsigned char *)malloc(keyLen + 1); // this is messy and will come back to haunt me
+        strncpy((char *)config->hardcodedKey, buffer, keyLen + 1);
+    }
     else
     {
         result = -1; // invalid line

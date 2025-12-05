@@ -16,6 +16,7 @@ struct vpn_config {
     char vpnNetwork[HARDCODED_IP_LENGTH];
     unsigned short vpnPort;
     // unsigned int maxVpnClients; // currently unused
+    unsigned char * hardcodedKey; // currently only supports hardcoded key
 };
 
 struct vpn_config readVPNConfig(char * configFilePath);
