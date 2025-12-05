@@ -6,7 +6,7 @@ took the basic code outline from my [minimalist HTTP Server in C](https://github
 
 currently this is unfinished
 
-Features ::  
+### Features  
  - reads from config file  
  - creates TUN interface on client and server  
  - sets TUN interface as default route on client
@@ -16,7 +16,7 @@ Features ::
  - server routes traffic encrypted traffic from client and is able to route it back to the client
  - the client can ping the internal virtual IP addresses defined by the VPN (eg. the VPN's internal IP)
 
-Missing ::
+### Missing
  - handshake using public key encryption to create a per session symmetric key sent via TCP connection
  - initialization vector sent via TCP connection at least once
  - memory cleanup/security (error handling is a mess and I need to make sure memory is freed)
@@ -48,7 +48,9 @@ sudo apt install iptables
 
 go into `./vpn/`
 
-`cd vpn`
+```bash
+cd vpn
+```
 
 build server with
 
@@ -72,11 +74,15 @@ make
 
 run server with
 
-`bin/VPNserver.out [vpnconfig.cfg]`
+```bash
+bin/VPNserver.out [vpnconfig.cfg]
+```
 
 or client with
 
-`bin/VPNclient.out [vpnconfig.cfg]`
+```bash
+bin/VPNclient.out [vpnconfig.cfg]
+```
 
 where `[vpnconfig.cfg]` is the path to your config file
 
