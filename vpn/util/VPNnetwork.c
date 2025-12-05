@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "VPNtools.h"
+#include "VPNconfig.h"
 
 int setupUDPSocket(unsigned short fileServPort)
 {
@@ -167,7 +168,7 @@ bool createNetlinkSocket(struct nl_sock ** sock, struct rtnl_link **link, char *
 }
 
 // configure the TUN/TAP interface with Netlink
-int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
+int configureInterface(char * ifName, char * ipAddr, struct vpn_config * config, int (*specialConfiguration)(struct nl_sock *, char *, struct vpn_config *))
 {
     int err = 0;
     struct nl_sock *sock;
@@ -185,7 +186,7 @@ int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)
         err = activateInterface(sock, link, ipAddr);
         if (err >= 0 && specialConfiguration != NULL)
         {
-            err = specialConfiguration(sock, ifName);
+            err = specialConfiguration(sock, ifName, config);
             if (err < 0)
             {
                 fprintf(stderr, "Error in special configuration\n");
@@ -198,7 +199,7 @@ int configureInterface(char * ifName, char * ipAddr, int (*specialConfiguration)
 }
 
 // create TUN interface for VPN
-int createInterface(char *interfaceName, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
+int createInterface(char *interfaceName, char * ipAddr, struct vpn_config * config, int (*specialConfiguration)(struct nl_sock *, char *, struct vpn_config *))
 {
     int type = IFF_TUN; // we don't care about TAF interfaces
     int tunFd = open("/dev/net/tun", O_RDWR | O_CLOEXEC); // fd for tun interface
@@ -227,7 +228,7 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
         // NOTE: this changes the name variable in the caller as well
         memcpy(interfaceName, setIfrRequest.ifr_name, IFNAMSIZ);
 
-        if (configureInterface(interfaceName, ipAddr, specialConfiguration) < 0)
+        if (configureInterface(interfaceName, ipAddr, config, specialConfiguration) < 0)
         {
             fprintf(stderr, "Error in connfiguring interface\n");
             close(tunFd);
@@ -239,31 +240,31 @@ int createInterface(char *interfaceName, char * ipAddr, int (*specialConfigurati
     return tunFd; // TUN interface file descriptor is the file descriptor to read our data
 }
 
-void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialConfiguration)(struct nl_sock *, char *))
+void setupVPNContext(struct vpn_context * context, char * ipAddr, struct vpn_config * config, int (*specialConfiguration)(struct nl_sock *, char *, struct vpn_config *))
 {
     // zero it out
     memset(context, 0, sizeof(context));
 
     // interface name
     char interfaceName[IFNAMSIZ];
-    strncpy(interfaceName, TUNTAP_NAME, IFNAMSIZ); // we need a writable version of the name
+    strncpy(interfaceName, config->interfaceName, IFNAMSIZ); // we need a writable version of the name
 
     // create the interface and get a filedecriptor we can read and write to
-    context->interfaceFd = createInterface(interfaceName, ipAddr, specialConfiguration);
+    context->interfaceFd = createInterface(interfaceName, ipAddr, config, specialConfiguration);
 
     // check for error
     if (context->interfaceFd  > 0)
     {
-        printf("TUN/TAP interface %s created successfully with name %s!\n", TUNTAP_NAME, interfaceName);
+        printf("TUN/TAP interface %s created successfully with name %s!\n", config->interfaceName, interfaceName);
     }
     else
     {
-        printf("Error creating TUN/TAP interface %s\n", TUNTAP_NAME);
+        printf("Error creating TUN/TAP interface %s\n", config->interfaceName);
         DieWithError("Are you root?\n");
     }
     
     // setup VPN socket
-    context->vpnSock = setupUDPSocket(VPN_PORT); // hardcoded port for now
+    context->vpnSock = setupUDPSocket(config->vpnPort); // hardcoded port for now
 
     // check for error
     if (context->vpnSock  > 0)
@@ -277,7 +278,7 @@ void setupVPNContext(struct vpn_context * context, char * ipAddr, int (*specialC
     }
 
     // set up server address struct
-    if (setServerAddress(context, VPN_PUBLIC_SERVER_IP, VPN_PORT) <= 0)
+    if (setServerAddress(context, config->vpnPublicServerIp, config->vpnPort) <= 0)
     {
         DieWithError("inet_pton failed");
     }

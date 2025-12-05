@@ -34,7 +34,7 @@
 #include "VPNnetwork.h"
 #include "VPNconfig.h"
 
-int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
+int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName, struct vpn_config * config)
 {
     int err = 0;
     // re-route all traffic through the VPN
@@ -46,7 +46,7 @@ int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
     rtnl_route_set_dst(route, dst);
 
     // next-hop via your VPN server
-    err = nl_addr_parse(VPN_PRIVATE_SERVER_IP, AF_INET, &gateway); // VPN server IP
+    err = nl_addr_parse(config->vpnPrivateServerIp, AF_INET, &gateway); // VPN server IP
     if (err < 0) 
     {
         DieWithError("Invalid IP\n");

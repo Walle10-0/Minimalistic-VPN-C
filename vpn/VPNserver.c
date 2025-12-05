@@ -35,6 +35,7 @@
 #include "VPNtools.h"
 #include "VPNcrypt.h"
 #include "VPNnetwork.h"
+#include "VPNconfig.h"
 
 // this TUN_OFFSET is PURE EVIL
 #define TUN_OFFSET 4  // size of length header
@@ -93,7 +94,7 @@ int enableIpForwarding()
     return err;
 }
 
-int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
+int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName, struct vpn_config * config)
 {
     // set up route forwarding via default interface
     char *defaultIfName = getDefaultInterface(sock); // this doesn't work rn lol
@@ -109,7 +110,7 @@ int configureIpTablesRouting(struct nl_sock *sock, char *vpnIfName)
         char cmd[256];
     
         //iptables -t nat -A POSTROUTING -o <out-if> -j MASQUERADE
-        snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", VPN_NETWORK, defaultIfName);
+        snprintf(cmd, sizeof(cmd), "iptables -t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", config->vpnNetwork, defaultIfName);
         system(cmd);
 
         //iptables -A FORWARD -i vpnserver -o <out-if> -j ACCEPT
@@ -297,11 +298,13 @@ void spawnThreads(struct vpn_context * context)
     pthread_join(reciever, NULL);
 }
 
-void main()
+int main(int argc, char *argv[])
 {
+    struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
+
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context, VPN_PRIVATE_SERVER_IP, addServerRoutingRules);
+    setupVPNContext(&context, config.vpnPrivateServerIp, addServerRoutingRules);
 
     memset(clientVpnIp, 0, sizeof(clientVpnIp)); // initialize
     memset(clientRealIp, 0, sizeof(clientRealIp)); // initialize

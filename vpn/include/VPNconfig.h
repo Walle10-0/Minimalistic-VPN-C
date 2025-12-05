@@ -15,7 +15,7 @@ struct vpn_config {
     char vpnPrivateServerIp[HARDCODED_IP_LENGTH]; 
     char vpnNetwork[HARDCODED_IP_LENGTH];
     unsigned short vpnPort;
-    unsigned int maxVpnClients;
+    // unsigned int maxVpnClients; // currently unused
 };
 
 struct vpn_config readVPNConfig(char * configFilePath);

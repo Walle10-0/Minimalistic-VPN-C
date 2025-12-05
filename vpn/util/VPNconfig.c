@@ -59,10 +59,6 @@ int parseConfigLine(char * line, struct vpn_config * config)
     {
         result = 1;
     }
-    else if (sscanf(line, " maxVpnClients = %u", &config->maxVpnClients) == 1)
-    {
-        result = 1;
-    }
     else
     {
         result = -1; // invalid line
