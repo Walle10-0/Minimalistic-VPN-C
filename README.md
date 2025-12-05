@@ -4,6 +4,23 @@ A minimalist VPN made in C as a class project and follow up to my minimalist HTT
 
 took the basic code outline from my [minimalist HTTP Server in C](https://github.com/Walle10-0/Minimalistic-HTTP-Server.git)
 
+currently this is unfinished
+
+Features ::  
+ - reads from config file  
+ - creates TUN interface on client and server  
+ - sets TUN interface as default route on client
+ - sets up routing using TUN interface on server
+ - encapsulates packets in UDP packets between client and server  
+ - enrypts contents with aes_256 using key from config file
+ - server routes traffic encrypted traffic from client and is able to route it back to the client
+ - the client can ping the internal virtual IP addresses defined by the VPN (eg. the VPN's internal IP)
+
+Missing ::
+ - handshake using public key encryption to create a per session symmetric key sent via TCP connection
+ - initialization vector sent via TCP connection at least once
+ - memory cleanup/security (error handling is a mess and I need to make sure memory is freed)
+
 ## Dependencies
 
 built for Linux
@@ -65,6 +82,3 @@ where `[vpnconfig.cfg]` is the path to your config file
 
 the default config file is `./vpnconfig.cfg`
 
-## Notes
-
-Error handling is a mess
