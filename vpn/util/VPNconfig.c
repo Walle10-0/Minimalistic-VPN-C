@@ -25,7 +25,7 @@ int parseConfigLine(char * line, struct vpn_config * config)
     {
         result = 0; // comment
     }
-    else if (sscanf(line, " interfaceName = %s", buffer) != 1)
+    else if (sscanf(line, " interfaceName = %s", buffer) == 1)
     {
         strncpy(config->interfaceName, buffer, IFNAMSIZ);
         result = 1;
