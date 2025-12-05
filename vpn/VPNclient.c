@@ -32,6 +32,7 @@
 #include "VPNtools.h"
 #include "VPNcrypt.h"
 #include "VPNnetwork.h"
+#include "VPNconfig.h"
 
 int addClientRoutingRules(struct nl_sock *sock, char *vpnIfName)
 {
@@ -151,13 +152,17 @@ void spawnThreads(struct vpn_context * context)
     pthread_join(reciever, NULL);
 }
 
-void main()
+int main(int argc, char *argv[])
 {
+    struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
+
     // create shared context object
     struct vpn_context context;
-    setupVPNContext(&context, VPN_CLIENT_IP, addClientRoutingRules);
+    setupVPNContext(&context, config.vpnClientIp, addClientRoutingRules);
 
     spawnThreads(&context);
 
     close(context.interfaceFd);
+
+    return 0;
 }

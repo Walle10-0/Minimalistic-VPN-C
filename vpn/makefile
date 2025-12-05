@@ -9,7 +9,7 @@ CFLAGS  = -Iinclude -I/usr/include/libnl3
 LDFLAGS = -lnl-3 -lnl-genl-3 -lnl-route-3 -lpthread -lcrypto
 
 # Utility modules inside ./util/
-UTILS = VPNcrypt VPNnetwork VPNtools
+UTILS = VPNcrypt VPNnetwork VPNtools VPNconfig
 UTIL_SRC = $(addprefix util/, $(addsuffix .c, $(UTILS)))
 UTIL_OBJ = $(addprefix build/, $(addsuffix .o, $(UTILS)))
 

@@ -50,3 +50,21 @@ or build both with
 ```bash
 make
 ```
+
+## Usage
+
+run server with
+
+`bin/VPNserver.out [vpnconfig.cfg]`
+
+or client with
+
+`bin/VPNclient.out [vpnconfig.cfg]`
+
+where `[vpnconfig.cfg]` is the path to your config file
+
+the default config file is `./vpnconfig.cfg`
+
+## Notes
+
+Error handling is a mess
