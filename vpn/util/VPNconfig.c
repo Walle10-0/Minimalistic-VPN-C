@@ -30,27 +30,27 @@ int parseConfigLine(char * line, struct vpn_config * config)
         strncpy(config->interfaceName, buffer, IFNAMSIZ);
         result = 1;
     }
-    else if (sscanf(line, " vpnClientIp = %s", buffer) != 1)
+    else if (sscanf(line, " vpnClientIp = %s", buffer) == 1)
     {
         strncpy(config->vpnClientIp, buffer, HARDCODED_IP_LENGTH);
         result = 1;
     }
-    else if (sscanf(line, " vpnPublicServerIp = %s", buffer) != 1)
+    else if (sscanf(line, " vpnPublicServerIp = %s", buffer) == 1)
     {
         strncpy(config->vpnPublicServerIp, buffer, HARDCODED_IP_LENGTH);
         result = 1;
     }
-    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) != 1)
+    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) == 1)
     {
         strncpy(config->vpnPrivateServerIp, buffer, HARDCODED_IP_LENGTH);
         result = 1;
     }
-    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) != 1)
+    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) == 1)
     {
         strncpy(config->vpnPrivateServerIp, buffer, HARDCODED_IP_LENGTH);
         result = 1;
     }
-    else if (sscanf(line, " vpnNetwork = %s", buffer) != 1)
+    else if (sscanf(line, " vpnNetwork = %s", buffer) == 1)
     {
         strncpy(config->vpnNetwork, buffer, HARDCODED_IP_LENGTH);
         result = 1;
