@@ -9,14 +9,27 @@
 #define DEFAULT_CONFIG_FILE "vpnconfig.cfg"
 
 struct vpn_config {
+    // network configuration
     char interfaceName[IFNAMSIZ];
-    char vpnClientIp[HARDCODED_IP_LENGTH];
+    unsigned short vpnPort; // port for encrypted VPN traffic
+    unsigned short tcpPort; // port for TCP control traffic (eg. handshakes, key exchange)
+
+    // public IP addr of server
     char vpnPublicServerIp[HARDCODED_IP_LENGTH]; 
+
+    // dynamic VPN specific configuration
+    char vpnClientIp[HARDCODED_IP_LENGTH];
     char vpnPrivateServerIp[HARDCODED_IP_LENGTH]; 
     char vpnNetwork[HARDCODED_IP_LENGTH];
-    unsigned short vpnPort;
-    // unsigned int maxVpnClients; // currently unused
-    unsigned char * hardcodedKey; // currently only supports hardcoded key
+    
+    unsigned char * symmetricKey;
+    
+    // for asymmetric encryption
+    unsigned char * privateKey;
+    unsigned char * publicKey;
+
+    // currently only supports hardcoded key
+    unsigned char * hardcodedKey; 
 };
 
 struct vpn_config readVPNConfig(char * configFilePath);
