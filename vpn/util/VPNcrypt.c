@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define CIPHER "AES-256-GCM"
+#define CIPHER "AES-256-CTR" //"AES-256-GCM"
 
 int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv)
 {
