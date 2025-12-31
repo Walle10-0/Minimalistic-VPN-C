@@ -21,45 +21,45 @@ int parseConfigLine(char * line, struct vpn_config * config)
     {
         result = 0; // empty line
     }
-    else if (sscanf(line, " %[#]", buffer) == 1)
+    else if (line[0] == '#')
     {
         result = 0; // comment
     }
-    else if (sscanf(line, " interfaceName = %s", buffer) == 1)
+    else if (sscanf(line, " interfaceName = %255s", buffer) == 1)
     {
         strncpy(config->interfaceName, buffer, IFNAMSIZ);
+        config->interfaceName[IFNAMSIZ - 1] = '\0';
         result = 1;
     }
-    else if (sscanf(line, " vpnClientIp = %s", buffer) == 1)
+    else if (sscanf(line, " vpnClientIp = %255s", buffer) == 1)
     {
         strncpy(config->vpnClientIp, buffer, HARDCODED_IP_LENGTH);
+        config->vpnClientIp[HARDCODED_IP_LENGTH - 1] = '\0';
         result = 1;
     }
-    else if (sscanf(line, " vpnPublicServerIp = %s", buffer) == 1)
+    else if (sscanf(line, " vpnPublicServerIp = %255s", buffer) == 1)
     {
         strncpy(config->vpnPublicServerIp, buffer, HARDCODED_IP_LENGTH);
+        config->vpnPublicServerIp[HARDCODED_IP_LENGTH - 1] = '\0';
         result = 1;
     }
-    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) == 1)
+    else if (sscanf(line, " vpnPrivateServerIp = %255s", buffer) == 1)
     {
         strncpy(config->vpnPrivateServerIp, buffer, HARDCODED_IP_LENGTH);
+        config->vpnPrivateServerIp[HARDCODED_IP_LENGTH - 1] = '\0';
         result = 1;
     }
-    else if (sscanf(line, " vpnPrivateServerIp = %s", buffer) == 1)
-    {
-        strncpy(config->vpnPrivateServerIp, buffer, HARDCODED_IP_LENGTH);
-        result = 1;
-    }
-    else if (sscanf(line, " vpnNetwork = %s", buffer) == 1)
+    else if (sscanf(line, " vpnNetwork = %255s", buffer) == 1)
     {
         strncpy(config->vpnNetwork, buffer, HARDCODED_IP_LENGTH);
+        config->vpnNetwork[HARDCODED_IP_LENGTH - 1] = '\0';
         result = 1;
     }
     else if (sscanf(line, " vpnPort = %hu", &config->vpnPort) == 1)
     {
         result = 1;
     }
-    else if (sscanf(line, " hardcodedKey = %s", buffer) == 1)
+    else if (sscanf(line, " hardcodedKey = %255s", buffer) == 1)
     {
         // allocate memory for the key
         size_t keyLen = strlen(buffer);
@@ -97,6 +97,8 @@ struct vpn_config readVPNConfig(char * configFilePath)
             fprintf(stderr, "Error parsing config line: %s\n", buffer);
         }
     }
+
+    fclose(configFile);
 
     return config;
 }
