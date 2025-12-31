@@ -191,7 +191,11 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // this is where encryption would go
-        encryptData(buf, nread, data, &ndata, key, NULL);
+        if (encryptData(buf, nread, data, &ndata, key, NULL) != 1)
+        {
+            printf("Error encrypting data\n");
+            continue;
+        }
 
         // send length header
         if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
@@ -269,7 +273,11 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        decryptData(buf, nread, data, &ndata, key, NULL);
+        if (decryptData(buf, nread, data, &ndata, key, NULL) != 1)
+        {
+            printf("Error decrypting data\n");
+            continue;
+        }
 
         cacheRealIp(incomingClientRealIp, data);
 
