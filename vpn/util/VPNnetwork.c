@@ -277,6 +277,8 @@ void setupVPNContext(struct vpn_context * context, char * ipAddr, struct vpn_con
         DieWithError("Error creating VPN socket\n");
     }
 
+    fprintf(stdout, "VPN server IP %s\n", config->vpnPublicServerIp);
+
     // set up server address struct
     if (setServerAddress(context, config->vpnPublicServerIp, config->vpnPort) <= 0)
     {

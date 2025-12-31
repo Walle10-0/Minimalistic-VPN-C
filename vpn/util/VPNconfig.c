@@ -17,7 +17,7 @@ int parseConfigLine(char * line, struct vpn_config * config)
     int result = 0;
 
     // long else if ladder
-    if (sscanf(line, " %s", buffer) == EOF)
+    if (line[0] == EOF || line[0] == '\n')
     {
         result = 0; // empty line
     }
