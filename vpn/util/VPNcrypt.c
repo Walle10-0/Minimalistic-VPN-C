@@ -88,7 +88,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     return 1;
 }
 
-int decryptData(unsigned char * inputBuf, ssize_t inputLen, unsigned char * outputBuf, ssize_t * outputLen, const unsigned char * key, const unsigned char * iv)
+int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv)
 {
     unsigned char tag[16]; // placeholder for later tag use
     int plaintext_len;
