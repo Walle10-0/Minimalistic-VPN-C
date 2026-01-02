@@ -284,4 +284,7 @@ void setupVPNContext(struct vpn_context * context, char * ipAddr, struct vpn_con
     {
         DieWithError("inet_pton failed");
     }
+
+    //set up encryption parameters
+    context->encryptParams.key = config->hardcodedKey;
 }

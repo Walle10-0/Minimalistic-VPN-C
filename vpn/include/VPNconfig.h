@@ -21,15 +21,28 @@ struct vpn_config {
     char vpnClientIp[HARDCODED_IP_LENGTH];
     char vpnPrivateServerIp[HARDCODED_IP_LENGTH]; 
     char vpnNetwork[HARDCODED_IP_LENGTH];
-    
-    unsigned char * symmetricKey;
-    
+        
     // for asymmetric encryption
     unsigned char * privateKey;
     unsigned char * publicKey;
 
     // currently only supports hardcoded key
     unsigned char * hardcodedKey; 
+};
+
+struct encryptParams {
+    unsigned char * key;
+    unsigned char * prev_iv;
+    size_t iv_len;
+    size_t tag_len;
+};
+
+struct vpn_context {
+    int interfaceFd;
+    int vpnSock;
+    struct sockaddr_in serverAddr;
+
+    struct encryptParams encryptParams;
 };
 
 struct vpn_config readVPNConfig(char * configFilePath);

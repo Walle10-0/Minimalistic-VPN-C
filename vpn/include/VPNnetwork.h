@@ -13,14 +13,6 @@
 #define MAX_BUF_SIZE 2000
 #define MAXPENDING 5
 
-// structs
-struct vpn_context {
-    int interfaceFd;
-    int vpnSock;
-    struct sockaddr_in serverAddr;
-    // encryption keys, etc.
-};
-
 // function prototypes
 
 int setupUDPSocket(unsigned short fileServPort);

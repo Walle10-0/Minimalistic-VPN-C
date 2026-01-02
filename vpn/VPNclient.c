@@ -82,7 +82,7 @@ void transmitterLoop(struct vpn_context * context)
         printf("Tx %zd bytes \n", nread);
 
         // this is where encryption would go
-        if (encryptData(buf, nread, data, &ndata, key, NULL) != 1)
+        if (encryptData(buf, nread, data, &ndata, context->encryptParams.key, NULL) != 1)
         {
             printf("Error encrypting data\n");
             continue;
@@ -129,7 +129,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        if (decryptData(buf, nread, data, &ndata, key, NULL) != 1)
+        if (decryptData(buf, nread, data, &ndata, context->encryptParams.key, NULL) != 1)
         {
             printf("Error decrypting data\n");
             continue;
@@ -165,8 +165,6 @@ void spawnThreads(struct vpn_context * context)
 int main(int argc, char *argv[])
 {
     struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
-
-    key = config.hardcodedKey;
 
     // create shared context object
     struct vpn_context context;
