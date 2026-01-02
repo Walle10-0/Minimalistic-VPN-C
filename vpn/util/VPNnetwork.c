@@ -242,6 +242,8 @@ int createInterface(char *interfaceName, char * ipAddr, struct vpn_config * conf
 
 void setupVPNContext(struct vpn_context * context, char * ipAddr, struct vpn_config * config, int (*specialConfiguration)(struct nl_sock *, char *, struct vpn_config *))
 {
+    fprintf(stdout, "hardcoded encryption key should be: %s\n", config->hardcodedKey);
+
     // zero it out
     memset(context, 0, sizeof(context));
 
