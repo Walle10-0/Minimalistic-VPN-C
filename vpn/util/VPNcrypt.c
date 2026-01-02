@@ -20,6 +20,8 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     unsigned char tag[16]; // placeholder for later tag use
     int ciphertext_len;
 
+    fprintf(stdout, "Using hardcoded encryption key: %s\n", key);
+
     // ig this is an object to do encryption
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
