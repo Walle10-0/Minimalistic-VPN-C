@@ -4,6 +4,8 @@
 
 #include <sys/types.h>
 
+#include "VPNconfig.h"
+
 struct encrypted_payload {
     size_t data_len;
     unsigned char * iv;
