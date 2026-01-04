@@ -25,7 +25,17 @@ void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
         if (keyLen)
             *keyLen = EVP_CIPHER_get_key_length(cipher);
         if (tagLen)
-            *tagLen = EVP_CIPHER_get_tag_length(cipher);
+        {
+            EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+            if (ctx != NULL)
+            {
+                if (EVP_EncryptInit_ex2(ctx, cipher, NULL, NULL, NULL) == 1)
+                {
+                    *tagLen = EVP_CIPHER_CTX_get_tag_length(ctx);
+                }
+                EVP_CIPHER_CTX_free(ctx);
+            }
+        } 
         if (ivLen)
             *ivLen = EVP_CIPHER_get_iv_length(cipher);
         EVP_CIPHER_free(cipher);
