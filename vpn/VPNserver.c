@@ -193,7 +193,7 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // this is where encryption would go
-        if (encryptData(buf, nread, data, &ndata, context->encryptParams.key, NULL) != 1)
+        if (encryptData(buf, nread, data, &ndata, context->encryptParams) != 1)
         {
             printf("Error encrypting data\n");
             continue;
@@ -275,7 +275,7 @@ void recieverLoop(struct vpn_context * context)
         printf("Rx %zd bytes \n", nread);
 
         // this is where decryption would go
-        if (decryptData(buf, nread, data, &ndata, context->encryptParams.key, NULL) != 1)
+        if (decryptData(buf, nread, data, &ndata, context->encryptParams) != 1)
         {
             printf("Error decrypting data\n");
             continue;
@@ -317,6 +317,8 @@ int main(int argc, char *argv[])
     // create shared context object
     struct vpn_context context;
     setupVPNContext(&context, config.vpnPrivateServerIp, &config, addServerRoutingRules);
+
+    getCipherProperties(NULL, &context.encryptParams.iv_len, &context.encryptParams.tag_len);
 
     memset(clientVpnIp, 0, sizeof(clientVpnIp)); // initialize
     memset(clientRealIp, 0, sizeof(clientRealIp)); // initialize

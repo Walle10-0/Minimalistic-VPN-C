@@ -11,8 +11,10 @@ struct encrypted_payload {
     unsigned char * tag;
 };
 
-int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv);
+void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen);
 
-int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv);
+int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, struct encryptParams encryptParams);
+
+int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, struct encryptParams encryptParams);
 
 #endif

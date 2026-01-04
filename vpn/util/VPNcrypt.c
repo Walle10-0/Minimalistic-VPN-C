@@ -13,11 +13,30 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "VPNconfig.h"
+
 #define CIPHER "AES-256-CTR" //"AES-256-GCM"
 
-int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv)
+void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
+{
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, CIPHER, NULL);
+    if (cipher != NULL)
+    {
+        if (keyLen)
+            *keyLen = EVP_CIPHER_get_key_length(cipher);
+        if (tagLen)
+            *tagLen = EVP_CIPHER_get_tag_length(cipher);
+        if (ivLen)
+            *ivLen = EVP_CIPHER_get_iv_length(cipher);
+        EVP_CIPHER_free(cipher);
+    }
+
+}
+
+int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, struct encryptParams encryptParams)
 {
     unsigned char tag[16]; // placeholder for later tag use
+    unsigned char * iv = NULL;
     int ciphertext_len;
 
     // ig this is an object to do encryption
@@ -38,7 +57,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
 
     // initialize the encryption object
-    if (EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL) != 1)
+    if (EVP_EncryptInit_ex2(ctx, cipher, encryptParams.key, iv, NULL) != 1)
     {
         // Handle error: initialization failed
         EVP_CIPHER_CTX_free(ctx);
@@ -88,9 +107,10 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     return 1;
 }
 
-int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, const unsigned char * key, const unsigned char * iv)
+int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outputBuf, size_t * outputLen, struct encryptParams encryptParams)
 {
     unsigned char tag[16]; // placeholder for later tag use
+    unsigned char * iv = NULL;
     int plaintext_len;
 
     // ig this is an object to do encryption
@@ -111,7 +131,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
 
     // initialize the decryption object
-    if (EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL) != 1)
+    if (EVP_DecryptInit_ex2(ctx, cipher, encryptParams.key, iv, NULL) != 1)
     {
         // Handle error: initialization failed
         EVP_CIPHER_CTX_free(ctx);
