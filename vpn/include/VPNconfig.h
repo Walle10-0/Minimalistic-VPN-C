@@ -3,6 +3,7 @@
 // shared code between client and server
 
 #include <net/if.h>
+#include <netinet/in.h>
 
 // helpful config constants
 #define HARDCODED_IP_LENGTH 32

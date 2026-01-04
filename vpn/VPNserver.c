@@ -313,9 +313,7 @@ void spawnThreads(struct vpn_context * context)
 int main(int argc, char *argv[])
 {
     struct vpn_config config = readVPNConfig((argc < 2) ? NULL : argv[1]);
-
-    fprintf(stdout, "hardcoded encryption key should be: %s\n", config.hardcodedKey);
-
+    
     // create shared context object
     struct vpn_context context;
     setupVPNContext(&context, config.vpnPrivateServerIp, &config, addServerRoutingRules);
