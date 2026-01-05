@@ -210,6 +210,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     // finalize the decryption
     if (EVP_DecryptFinal_ex(ctx, outputBuf + *outputLen, &plaintext_len) != 1)
     {
+        printf("Failed final encryption\n");
         // Handle error: encryption finalization failed
         EVP_CIPHER_CTX_free(ctx);
         EVP_CIPHER_free(cipher);
