@@ -161,6 +161,9 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         return -1; // or some other error code
     }
 
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
+    printf("IV len: %d\n", encryptParams.iv_len);
+
     // fetch the cipher engine
     EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, CIPHER, NULL);
     if (cipher == NULL)
