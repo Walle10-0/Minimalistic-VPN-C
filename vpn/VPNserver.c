@@ -172,6 +172,7 @@ void transmitterLoop(struct vpn_context * context)
     ssize_t nread;
     ssize_t ndata;
     uint16_t nread_net;
+    uint16_t ndata_net;
     char buf[MAX_BUF_SIZE];
     char data[MAX_BUF_SIZE];
     struct sockaddr_in * dest_ip;
@@ -200,7 +201,8 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // send length header
-        if (sendto(context->vpnSock, &nread_net, sizeof(nread_net),
+        ndata_net = htons((uint16_t)ndata);
+        if (sendto(context->vpnSock, &ndata_net, sizeof(ndata_net),
             0, (struct sockaddr *)dest_ip, sizeof(*dest_ip)) < 0)
         {
             printf("Error sending length header\n");

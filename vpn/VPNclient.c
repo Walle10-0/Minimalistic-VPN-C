@@ -72,6 +72,7 @@ void transmitterLoop(struct vpn_context * context)
     ssize_t nread;
     ssize_t ndata;
     uint16_t nread_net;
+    uint16_t ndata_net
     char buf[MAX_BUF_SIZE];
     char data[MAX_BUF_SIZE];
 	while(1) 
@@ -89,7 +90,8 @@ void transmitterLoop(struct vpn_context * context)
         }
 
         // send length header
-        sendto(context->vpnSock, &nread_net, sizeof(nread_net),
+        ndata_net = htons((uint16_t)ndata);
+        sendto(context->vpnSock, &ndata_net, sizeof(ndata_net),
             0, (struct sockaddr *)&(context->serverAddr), sizeof(context->serverAddr));
 
         // send actual packet
