@@ -176,6 +176,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     // initialize the decryption object
     if (EVP_DecryptInit_ex2(ctx, cipher, encryptParams.key, payload.iv, NULL) != 1)
     {
+        printf("Failed init\n");
         // Handle error: initialization failed
         EVP_CIPHER_CTX_free(ctx);
         EVP_CIPHER_free(cipher);
@@ -185,6 +186,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     //actually perform the decryption
     if (EVP_DecryptUpdate(ctx, outputBuf, &plaintext_len, payload.data, payload.data_len) != 1)
     {
+        printf("Failed encryption\n");
         // Handle error: encryption update failed
         EVP_CIPHER_CTX_free(ctx);
         EVP_CIPHER_free(cipher);
