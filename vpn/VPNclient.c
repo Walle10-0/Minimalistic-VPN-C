@@ -72,7 +72,7 @@ void transmitterLoop(struct vpn_context * context)
     ssize_t nread;
     ssize_t ndata;
     uint16_t nread_net;
-    uint16_t ndata_net
+    uint16_t ndata_net;
     char buf[MAX_BUF_SIZE];
     char data[MAX_BUF_SIZE];
 	while(1) 
