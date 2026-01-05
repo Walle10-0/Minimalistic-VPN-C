@@ -111,7 +111,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         EVP_CIPHER_free(cipher);
         return -1; // or some other error code
     }
-    *outputLen = len_update;
+    *outputLen += len_update;
 
     // finalize the encryption
     if (EVP_EncryptFinal_ex(ctx, outputBuf + *outputLen, &len_final) != 1)
@@ -122,7 +122,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         return -1; // or some other error code
     }
 
-    *outputLen = len_final;
+    *outputLen += len_final;
 
     // get the tag
     if (encryptParams.tag_len > 0)
