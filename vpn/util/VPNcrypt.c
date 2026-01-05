@@ -16,7 +16,7 @@
 
 #include "VPNconfig.h"
 
-#define CIPHER "AES-256-GCM" //"AES-256-CTR"
+#define CIPHER "AES-256-CTR" //"AES-256-GCM"
 
 void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
 {
@@ -25,6 +25,8 @@ void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
     {
         if (keyLen)
             *keyLen = EVP_CIPHER_get_key_length(cipher);
+        if (ivLen)
+            *ivLen = EVP_CIPHER_get_iv_length(cipher);
         if (tagLen)
         {
             EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -37,8 +39,6 @@ void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
                 EVP_CIPHER_CTX_free(ctx);
             }
         } 
-        if (ivLen)
-            *ivLen = EVP_CIPHER_get_iv_length(cipher);
         EVP_CIPHER_free(cipher);
     }
 
