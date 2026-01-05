@@ -170,6 +170,8 @@ int main(int argc, char *argv[])
     struct vpn_context context;
     setupVPNContext(&context, config.vpnClientIp, &config, addClientRoutingRules);
 
+    getCipherProperties(NULL, &context.encryptParams.iv_len, &context.encryptParams.tag_len);
+
     spawnThreads(&context);
 
     close(context.interfaceFd);
