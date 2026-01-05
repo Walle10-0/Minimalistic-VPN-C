@@ -81,15 +81,6 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
 
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
 
-    printf("IV len: %d\n", encryptParams.iv_len);
-
-    printf("IV: ");
-    for (size_t i = 0; i < encryptParams.iv_len; i++)
-    {
-        printf("%02x", iv[i]);
-    }
-    printf("\n");
-
     // prepend IV to output
     memcpy(outputBuf + *outputLen, iv, encryptParams.iv_len);
     *outputLen += encryptParams.iv_len;
@@ -139,17 +130,29 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         // append tag to output
         memcpy(outputBuf + *outputLen, tag, encryptParams.tag_len);
         *outputLen += encryptParams.tag_len;
-
-        printf("Tag len: %zu\n", encryptParams.tag_len);
-        printf("Tag: ");
-        for (size_t i = 0; i < encryptParams.tag_len; i++)
-        {
-            printf("%02x", tag[i]);
-        }
-        printf("\n");
     }
 
+    /*
+    printf("IV len: %d\n", encryptParams.iv_len);
+
+    printf("IV: ");
+    for (size_t i = 0; i < encryptParams.iv_len; i++)
+    {
+        printf("%02x", iv[i]);
+    }
+    printf("\n");
+
+    printf("Tag len: %zu\n", encryptParams.tag_len);
+
+    printf("Tag: ");
+    for (size_t i = 0; i < encryptParams.tag_len; i++)
+    {
+        printf("%02x", tag[i]);
+    }
+    printf("\n");
+
     printf("Total output len: %zu\n", *outputLen);
+    */
     
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
@@ -179,7 +182,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
 
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
 
-    
+    /*    
     printf("IV len: %d\n", encryptParams.iv_len);
 
     printf("IV: ");
@@ -197,7 +200,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         printf("%02x", payload.tag[i]);
     }
     printf("\n");
-
+    */
 
     // fetch the cipher engine
     EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, CIPHER, NULL);
