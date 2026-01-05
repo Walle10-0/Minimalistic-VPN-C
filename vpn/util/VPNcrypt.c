@@ -80,6 +80,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
 
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
+
     printf("IV len: %d\n", encryptParams.iv_len);
 
     printf("IV: ");
@@ -138,6 +139,13 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         // append tag to output
         memcpy(outputBuf + *outputLen, tag, encryptParams.tag_len);
         *outputLen += encryptParams.tag_len;
+
+        printf("Tag: ");
+        for (size_t i = 0; i < encryptParams.tag_len; i++)
+        {
+            printf("%02x", tag[i]);
+        }
+        printf("\n");
     }
 
 
@@ -169,6 +177,8 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
 
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
+
+    
     printf("IV len: %d\n", encryptParams.iv_len);
 
     printf("IV: ");
@@ -177,6 +187,14 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         printf("%02x", payload.iv[i]);
     }
     printf("\n");
+    
+    printf("Tag: ");
+    for (size_t i = 0; i < encryptParams.tag_len; i++)
+    {
+        printf("%02x", payload.tag[i]);
+    }
+    printf("\n");
+
 
     // fetch the cipher engine
     EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, CIPHER, NULL);
