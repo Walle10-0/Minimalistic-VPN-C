@@ -16,7 +16,7 @@
 
 #include "VPNconfig.h"
 
-#define CIPHER "AES-256-CTR" //"AES-256-GCM"
+#define CIPHER "AES-256-GCM" //"AES-256-CTR"
 
 void getCipherProperties(size_t * keyLen, size_t * tagLen, size_t * ivLen)
 {
@@ -48,7 +48,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
 {
     unsigned char tag[encryptParams.tag_len];
     unsigned char iv[encryptParams.iv_len];
-    int ciphertext_len;
+    int len_update, len_final;
 
     *outputLen = 0;
     memset(tag, 0, encryptParams.tag_len);
@@ -104,17 +104,17 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
 
     // actually perform the encryption
-    if (EVP_EncryptUpdate(ctx, outputBuf + *outputLen, &ciphertext_len, inputBuf, inputLen) != 1)
+    if (EVP_EncryptUpdate(ctx, outputBuf + *outputLen, &len_update, inputBuf, inputLen) != 1)
     {
         // Handle error: encryption update failed
         EVP_CIPHER_CTX_free(ctx);
         EVP_CIPHER_free(cipher);
         return -1; // or some other error code
     }
-    *outputLen += ciphertext_len;
+    *outputLen = len_update;
 
     // finalize the encryption
-    if (EVP_EncryptFinal_ex(ctx, outputBuf + *outputLen, &ciphertext_len) != 1)
+    if (EVP_EncryptFinal_ex(ctx, outputBuf + *outputLen, &len_final) != 1)
     {
         // Handle error: encryption finalization failed
         EVP_CIPHER_CTX_free(ctx);
@@ -122,7 +122,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         return -1; // or some other error code
     }
 
-    *outputLen += ciphertext_len;
+    *outputLen = len_final;
 
     // get the tag
     if (encryptParams.tag_len > 0)
