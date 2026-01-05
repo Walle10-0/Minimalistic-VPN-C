@@ -149,7 +149,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         printf("\n");
     }
 
-
+    printf("Total output len: %zu\n", *outputLen);
     
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
