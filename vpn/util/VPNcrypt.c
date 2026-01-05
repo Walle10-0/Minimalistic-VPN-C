@@ -79,6 +79,9 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         return -1; // or some other error code
     }
 
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, encryptParams.iv_len, NULL);
+    printf("IV len: %d\n", encryptParams.iv_len);
+
     // prepend IV to output
     memcpy(outputBuf + *outputLen, iv, encryptParams.iv_len);
     *outputLen += encryptParams.iv_len;
@@ -118,6 +121,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, encryptParams.tag_len, tag) != 1)
         {
+            printf("Failed to get tag\n");
             // Handle error: getting tag failed
             EVP_CIPHER_CTX_free(ctx);
             EVP_CIPHER_free(cipher);
@@ -190,6 +194,7 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, encryptParams.tag_len, payload.tag) != 1)
         {
+            printf("Failed to get tag\n");
             // Handle error: getting tag failed
             EVP_CIPHER_CTX_free(ctx);
             EVP_CIPHER_free(cipher);
