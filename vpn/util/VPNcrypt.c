@@ -140,6 +140,7 @@ int encryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
         memcpy(outputBuf + *outputLen, tag, encryptParams.tag_len);
         *outputLen += encryptParams.tag_len;
 
+        printf("Tag len: %zu\n", encryptParams.tag_len);
         printf("Tag: ");
         for (size_t i = 0; i < encryptParams.tag_len; i++)
         {
@@ -188,6 +189,8 @@ int decryptData(unsigned char * inputBuf, size_t inputLen, unsigned char * outpu
     }
     printf("\n");
     
+    printf("Tag len: %zu\n", encryptParams.tag_len);
+
     printf("Tag: ");
     for (size_t i = 0; i < encryptParams.tag_len; i++)
     {
